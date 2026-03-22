@@ -1,24 +1,88 @@
-# Port Scanner
+# Recon AI 🔐
 
-A Python-based TCP port scanner built for network reconnaissance and security analysis.
+> AI-powered network security platform for non-technical users.
 
-## Features
-- Scans ports 1-1024 on any target IP
-- Identifies common services by port number
-- Timestamps every scan automatically
-- Saves results to a formatted report file
+Recon AI automatically scans your network, finds vulnerabilities, 
+analyzes system logs, and explains everything in plain English using AI.
+No technical knowledge required. Perk: He can be funny 🤠
 
-## Tools Used
+---
+
+## The Problem Recon AI Solves
+
+Most security tools are built for experts. Nmap, Wireshark, Splunk — 
+powerful but intimidating. Small businesses, schools, clinics, and 
+home users need security too, but have no way to understand what's 
+happening on their networks.
+
+Recon AI fills that gap. Scan your network, get a plain English 
+explanation of every finding, and know exactly what to fix.
+
+---
+
+## How It Works
+```
+Run Recon AI
+↓
+Network Mapper discovers all live devices
+↓
+Port Scanner scans every device for open ports
+↓
+Log Analyzer checks system logs for threats
+↓
+Vulnerability Reporter maps findings to known risks
+↓
+AI Security Assistant explains everything in plain English
+↓
+Professional report generated automatically
+```
+
+---
+
+## The 5 Tools
+
+| Tool | What It Does | Status |
+
+| [Port Scanner](https://github.com/PRXSM/port-scanner) | Scans open ports on any target IP | ✅ Complete |
+| [Network Mapper](https://github.com/PRXSM/network-mapper) | Discovers all live devices on a network | ✅ Complete |
+| [Log Analyzer](https://github.com/PRXSM/log-analyzer) | Detects suspicious activity in system logs | ✅ Complete |
+| [Vulnerability Reporter](https://github.com/PRXSM/vulnerability-reporter) | Maps open ports to known security risks | ✅ Complete |
+| [AI Security Assistant](https://github.com/PRXSM/ai-security-assistant) | Explains everything in plain English using Claude AI | ✅ Complete |
+
+---
+
+## Tech Stack
+
 - Python 3.14
-- Socket Library
-- Datetime library
+- Anthropic Claude API
+- Cross-platform: Mac, Windows, Linux
 
-## How to Run
-python3 port_scanner.py
+---
 
-## Sample Output
-Scan Report - 127.0.0.1
-Time: 2026-03-20 22-28-20
-=============================================
-Port 88: OPEN (Kerberos)
-Port 445: OPEN (SMB)
+## Current Status
+
+✅ All 5 core modules complete
+✅ Cross-platform support
+✅ AI-powered analysis via Claude API
+🔄 Connecting modules into unified engine (in progress)
+🔄 Web dashboard (coming soon)
+🔄 Automated weekly network digest (coming soon)
+
+---
+
+## Vision
+
+Recon AI is built for the people who need security the most 
+but understand it the least. A school IT admin managing 200 
+devices. A small business owner with no security budget. 
+A clinic that just needs to know if their network is safe.
+
+One button. Plain English results. No expertise required.
+
+---
+
+## Built By
+
+**Asama Azim** — IT & Cybersecurity | Network+ Certified | Security+ in progress
+
+[GitHub](https://github.com/PRXSM) | [LinkedIn](https://linkedin.com/in/asama-azim-38a0b391)
