@@ -16,9 +16,7 @@ from ai_assistant import analyze_with_ai
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
-# ─────────────────────────────────────────
-# SCAN MODES
-# ─────────────────────────────────────────
+# scan modes
 SCAN_MODES = {
     "1": "Quick Scan      — Port scan + AI analysis",
     "2": "Network Scan    — Map network + Port scan + AI analysis",
@@ -26,9 +24,7 @@ SCAN_MODES = {
     "4": "Log Analysis    — Analyze local logs + AI analysis",
 }
 
-# ─────────────────────────────────────────
-# MENU
-# ─────────────────────────────────────────
+# menu
 def show_menu():
     print("\n" + "="*50)
     print("        RECON AI — UNIFIED ENGINE")
@@ -37,9 +33,7 @@ def show_menu():
         print(f"  [{key}] {value}")
     print("="*50)
 
-# ─────────────────────────────────────────
-# ENGINE BRAIN
-# ─────────────────────────────────────────
+# the brain
 def run_engine():
     show_menu()
     choice = input("\nSelect scan mode (1-4): ").strip()
@@ -113,9 +107,7 @@ def run_engine():
 
     return report_data, timestamp
 
-# ─────────────────────────────────────────
-# BUILD SUMMARY FOR AI
-# ─────────────────────────────────────────
+# build summary of the ai
 def build_scan_summary(report_data):
     lines = []
     mode = report_data.get("mode", "Unknown")
@@ -148,9 +140,7 @@ def build_scan_summary(report_data):
 
     return "\n".join(lines)
 
-# ─────────────────────────────────────────
-# SAVE UNIFIED REPORT
-# ─────────────────────────────────────────
+# save unified report
 def save_unified_report(report_data, ai_analysis, timestamp):
     mode = report_data.get("mode", "scan").replace(" ", "_")
     filename = f"recon_ai_{mode}_{timestamp}.txt"
@@ -169,9 +159,6 @@ def save_unified_report(report_data, ai_analysis, timestamp):
         f.write(ai_analysis + "\n")
     return filename
 
-# ─────────────────────────────────────────
-# MAIN
-# ─────────────────────────────────────────
 if __name__ == "__main__":
     report_data, timestamp = run_engine()
     if report_data:
