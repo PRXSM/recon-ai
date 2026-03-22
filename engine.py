@@ -114,7 +114,7 @@ def build_scan_summary(report_data):
     lines.append(f"Scan Mode: {mode}")
 
     if "target" in report_data:
-        lines.append(f"Target: {report_data['target']}")
+        lines.append(f"Target: [REDACTED]")
 
     if "live_hosts" in report_data:
         lines.append(f"\nLive Hosts Found: {len(report_data['live_hosts'])}")
