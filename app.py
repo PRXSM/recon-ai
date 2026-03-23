@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request
-from engine import build_scan_summary
+from engine import build_scan_summary, calculate_risk_score, get_risk_label
 from ai_assistant import analyze_with_ai
 from port_scanner import scan_target
 from network_mapper import scan_subnet
@@ -148,7 +148,6 @@ def scan():
     report_data = run_scan(target, mode)
     
     # calculate risk score
-    from engine import calculate_risk_score, get_risk_label
     score = calculate_risk_score(report_data)
     label, emoji = get_risk_label(score)
     report_data["score"] = score
