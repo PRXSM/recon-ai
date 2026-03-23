@@ -47,15 +47,16 @@
 </head>
 <body>
     <h1>⚡ Recon AI</h1>
-    <p>AI-powered network security scanning. Simple, fast, and most importantly, private.</p>
+    <p>Your personal network security advisor. Scan your own network, understand what's exposed, and learn how to protect it.</p>
 
     <div class="privacy-notice">
-        🔒 <strong>Privacy First:</strong> Your IP address never leaves your machine.
-        Only anonymized findings are sent for AI analysis — and only if you choose to.
+        🔒 <strong>Privacy First:</strong> Recon AI only scans networks you own.
+        It runs entirely on your machine. No data is sent anywhere without 
+         your permission. Think of it as a mirror — not a microscope pointed at others.
     </div>
 
     <form action="/scan" method="POST">
-        <label>Target IP Address</label>
+        <label>Your Network IP Address</label>
         <input type="text" name="target" placeholder="e.g. 192.168.1.1" required>
 
         <label>Scan Mode</label>
@@ -73,11 +74,13 @@
         </select>
 
         <div class="privacy-notice">
-            ⚠️ <strong>Legal Notice:</strong> Only scan networks you own or have
-            explicit permission to scan. Unauthorized scanning is illegal.
+            ⚠️ <strong>Legal Notice:</strong> Recon AI is designed to help you 
+            understand and protect YOUR OWN network. Scanning networks you don't 
+            own is illegal under the Computer Fraud and Abuse Act (CFAA) and 
+            equivalent laws worldwide.
             <br><br>
             <input type="checkbox" name="authorized" required>
-            I confirm I have authorization to scan this target.
+            I confirm this is my own network and i have authroization to scan it.
         </div>
 
         <button type="submit">🔍 Run Scan</button>

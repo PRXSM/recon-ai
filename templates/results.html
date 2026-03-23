@@ -15,6 +15,24 @@
         }
         h1 { color: #00bfff; }
         h2 { color: #00bfff; margin-top: 30px; }
+        p  { color: #aaaaaa; }
+        .score-box {
+            text-align: center;
+            padding: 30px;
+            border-radius: 10px;
+            margin: 20px 0;
+            background: #1a1a1a;
+            border: 1px solid #333;
+        }
+        .score-number {
+            font-size: 3em;
+            font-weight: bold;
+            color: #00bfff;
+        }
+        .score-label {
+            font-size: 1.2em;
+            margin-top: 5px;
+        }
         .card {
             background: #1a1a1a;
             border: 1px solid #333;
@@ -22,9 +40,10 @@
             padding: 15px 20px;
             margin: 10px 0;
         }
-        .high   { border-left: 4px solid #ff4444; }
-        .medium { border-left: 4px solid #ffaa00; }
-        .low    { border-left: 4px solid #00cc44; }
+        .critical { border-left: 4px solid #ff0000; }
+        .high     { border-left: 4px solid #ff4444; }
+        .medium   { border-left: 4px solid #ffaa00; }
+        .low      { border-left: 4px solid #00cc44; }
         .ai-box {
             background: #0d1f2d;
             border-left: 4px solid #00bfff;
@@ -50,76 +69,90 @@
             color: #aaaaaa;
             font-size: 0.85em;
         }
+        .count-badge {
+            background: #333;
+            color: #00bfff;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.85em;
+            margin-left: 8px;
+        }
     </style>
 </head>
 <body>
-    <h1>⚡ Recon AI — Scan Results</h1>
+    <h1>⚡ Recon AI — Your Network Report</h1>
     <p>Mode: {{ report_data.mode }} &nbsp;|&nbsp; Time: {{ timestamp }}</p>
+
+    {% if report_data.score is defined %}
+    <div class="score-box">
+        <div class="score-number">{{ report_data.score }}/100</div>
+        <div class="score-label">{{ report_data.score_emoji }} Network Health — {{ report_data.score_label }}</div>
+        <p style="font-size:0.85em; margin-top:10px;">
+            This score reflects the security posture of your network
+            based on open ports, vulnerabilities, and log findings.
+        </p>
+    </div>
+    {% endif %}
 
     {% if report_data.open_ports %}
     <h2>🔓 Open Ports</h2>
+    <p style="font-size:0.85em;">These are doors into your network. Each one should be intentional.</p>
     {% for port in report_data.open_ports %}
     <div class="card">{{ port }}</div>
     {% endfor %}
     {% endif %}
 
     {% if report_data.live_hosts %}
-    <h2>🖥️ Live Hosts</h2>
+    <h2>🖥️ Devices Found on Your Network</h2>
+    <p style="font-size:0.85em;">These devices responded to our scan. Recognize all of them?</p>
     {% for host in report_data.live_hosts %}
     <div class="card">{{ host }}</div>
     {% endfor %}
     {% endif %}
 
     {% if report_data.vulnerabilities %}
-    <h2>⚠️ Vulnerabilities</h2>
+    <h2>⚠️ Vulnerabilities Found</h2>
+    <p style="font-size:0.85em;">These are known risks associated with your open ports.</p>
     {% for v in report_data.vulnerabilities %}
     <div class="card {{ v.severity | lower }}">
         <strong>[{{ v.severity }}] Port {{ v.port }} — {{ v.service }}</strong><br>
         {{ v.description }}<br>
-        <em>{{ v.recommendation }}</em>
+        <em style="color:#00bfff;">→ {{ v.recommendation }}</em>
     </div>
     {% endfor %}
     {% endif %}
 
-{% if report_data.log_findings %}
-<h2>📋 Log Findings Summary</h2>
-<div class="card">
-    <strong>Total findings: {{ report_data.log_findings | length }}</strong>
-</div>
-{% set high = report_data.log_findings | selectattr("risk", "equalto", "HIGH") | list %}
-{% set medium = report_data.log_findings | selectattr("risk", "equalto", "MEDIUM") | list %}
-{% set low = report_data.log_findings | selectattr("risk", "equalto", "LOW") | list %}
-{% if high %}
-<div class="card high">
-    🔴 <strong>HIGH — {{ high | length }} findings</strong><br>
-    {{ high[0].description }}
-</div>
-{% endif %}
-{% if medium %}
-<div class="card medium">
-    🟡 <strong>MEDIUM — {{ medium | length }} findings</strong><br>
-    {{ medium[0].description }}
-</div>
-{% endif %}
-{% if low %}
-<div class="card low">
-    🟢 <strong>LOW — {{ low | length }} findings</strong><br>
-    {{ low[0].description }}
-</div>
-{% endif %}
-{% endif %}
+    {% if report_data.log_findings %}
+    <h2>📋 Log Activity Summary</h2>
+    <p style="font-size:0.85em;">
+        Recon AI analyzed your system logs and grouped similar findings together.
+        Instead of showing every line, here's what matters.
+    </p>
+    {% for f in report_data.log_findings %}
+    <div class="card {{ f.risk | lower }}">
+        <strong>[{{ f.risk }}]</strong> {{ f.description }}
+        <span class="count-badge">{{ f.count }}x detected</span><br>
+        <small style="color:#666;">
+            Across {{ f.files | length }} file(s) —
+            first at line {{ f.first_occurrence }},
+            last at line {{ f.last_occurrence }}
+        </small>
+    </div>
+    {% endfor %}
+    {% endif %}
 
     <h2>🤖 Recon AI Says</h2>
     {% if ai_analysis %}
     <div class="ai-box">{{ ai_analysis }}</div>
     {% else %}
     <div class="offline-notice">
-        🔒 Offline mode selected — no data was sent anywhere.
-        Your scan results are shown above in raw form.
+        🔒 Offline mode — no data was sent anywhere.
+        Your scan results are shown above.
+        Your network, your data, your control.
     </div>
     {% endif %}
 
-    <a href="/" class="back-btn">← Run Another Scan</a>
+    <a href="/" class="back-btn">← Scan Again</a>
 
 </body>
 </html>
