@@ -146,6 +146,14 @@ def scan():
 
     # run the scan
     report_data = run_scan(target, mode)
+    
+    # calculate risk score
+    from engine import calculate_risk_score, get_risk_label
+    score = calculate_risk_score(report_data)
+    label, emoji = get_risk_label(score)
+    report_data["score"] = score
+    report_data["score_label"] = label
+    report_data["score_emoji"] = emoji
 
     # only send to AI if user opted in
     ai_analysis = None

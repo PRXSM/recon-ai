@@ -1,5 +1,6 @@
 import datetime
 import logging
+import platform
 from port_scanner import scan_target
 from network_mapper import scan_subnet
 from log_analyzer import find_log_files, analyze_log, group_findings
@@ -29,6 +30,7 @@ def show_menu():
 def build_scan_summary(report_data):
     lines = []
     lines.append(f"Scan Mode: {report_data.get('mode', 'Unknown')}")
+    lines.append(f"Operating System: {platform.system()} {platform.release()}")
 
     # privacy — IP never sent to AI
     if "target" in report_data:
