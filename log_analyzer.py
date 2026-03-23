@@ -17,7 +17,7 @@ PATTERNS = {
         "description": "Failed login attempt detected."
     },
     "brute_force":{
-        "regex": r"Failed password|authentication failure",
+        "regex": r"Too many authentication failures|possible break-in attempt|REPEATED_ATTACK|repeated authentication failure|maximum authentication attempts exceeded",
         "risk": "CRITICAL",
         "description": "Possible brute force attack - multiple failed logins"
     },

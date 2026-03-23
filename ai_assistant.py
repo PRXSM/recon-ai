@@ -43,7 +43,7 @@ def analyze_with_ai(scan_data):
     logger.info("Sending scan data to Claude API...")
     message = client.messages.create(
         model="claude-opus-4-5",
-        max_tokens=1024,
+        max_tokens=4096,
         system=SYSTEM_PROMPT,
         messages=[
             {

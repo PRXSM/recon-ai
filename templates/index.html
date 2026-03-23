@@ -46,6 +46,12 @@
     </style>
 </head>
 <body>
+    {% if error %}
+    <div style="background:#1a0000; border-left:3px solid #ff4444; padding:10px 15px; margin-bottom:20px; color:#ff4444;">
+        ⚠️ {{ error }}
+    </div>
+    {% endif %}
+
     <h1>⚡ Recon AI</h1>
     <p>Your personal network security advisor. Scan your own network, understand what's exposed, and learn how to protect it.</p>
 
@@ -57,7 +63,7 @@
 
     <form action="/scan" method="POST">
         <label>Your Network IP Address</label>
-        <input type="text" name="target" placeholder="e.g. 192.168.1.1" required>
+        <input type="text" name="target" placeholder="e.g. Your router IP: 192.168.1.1" required>
 
         <label>Scan Mode</label>
         <select name="mode">
@@ -80,7 +86,7 @@
             equivalent laws worldwide.
             <br><br>
             <input type="checkbox" name="authorized" required>
-            I confirm this is my own network and i have authroization to scan it.
+            I confirm this is my own network and i have authorization to scan it.
         </div>
 
         <button type="submit">🔍 Run Scan</button>

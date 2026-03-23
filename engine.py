@@ -38,8 +38,8 @@ def build_scan_summary(report_data):
 
     if "live_hosts" in report_data:
         lines.append(f"\nLive Hosts Found: {len(report_data['live_hosts'])}")
-        for host in report_data["live_hosts"]:
-            lines.append(f"  - {host}")
+        for i, host in enumerate(report_data["live_hosts"], 1):
+            lines.append(f"  - [HOST {i} REDACTED]")
 
     if "open_ports" in report_data:
         lines.append(f"\nOpen Ports:")
