@@ -15,7 +15,7 @@
         }
         h1 { color: #00bfff; }
         p  { color: #aaaaaa; }
-        input, select {
+        input[type="text"] {
             width: 100%;
             padding: 10px;
             margin: 8px 0;
@@ -23,6 +23,66 @@
             border: 1px solid #333;
             color: #e0e0e0;
             border-radius: 5px;
+            box-sizing: border-box;
+        }
+        .tool-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 10px 0;
+        }
+        .tool-card {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 6px;
+            padding: 12px 14px;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+        .tool-card:hover { border-color: #00bfff; }
+        .tool-card input[type="checkbox"] { display: none; }
+        .tool-card.checked {
+            border-color: #00bfff;
+            background: #0d1f2d;
+        }
+        .tool-card label {
+            cursor: pointer;
+            display: block;
+        }
+        .tool-name { color: #e0e0e0; font-weight: bold; font-size: 0.95em; }
+        .tool-desc { color: #888; font-size: 0.8em; margin-top: 3px; }
+        .intensity-group {
+            display: flex;
+            gap: 10px;
+            margin: 10px 0;
+        }
+        .intensity-option {
+            flex: 1;
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 6px;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+        .intensity-option input[type="radio"] { display: none; }
+        .intensity-option.selected {
+            border-color: #00bfff;
+            background: #0d1f2d;
+        }
+        .intensity-option label { cursor: pointer; display: block; }
+        .intensity-name { color: #e0e0e0; font-weight: bold; font-size: 0.9em; }
+        .intensity-desc { color: #888; font-size: 0.75em; margin-top: 2px; }
+        .warn-ids {
+            display: none;
+            background: #1a0d00;
+            border-left: 3px solid #ff8800;
+            padding: 8px 14px;
+            color: #ffaa44;
+            font-size: 0.82em;
+            margin-top: 6px;
+            border-radius: 0 4px 4px 0;
         }
         button {
             width: 100%;
@@ -63,33 +123,101 @@
 
     <form action="/scan" method="POST">
         <label>Your Network IP Address</label>
-        <input type="text" name="target" placeholder="e.g. Your router IP: 192.168.1.1" required>
+        <input type="text" name="target" placeholder="e.g. 192.168.1.1 — your router or device IP">
 
-        <label>Scan Mode</label>
-        <select name="mode">
-            <option value="Quick Scan">Quick Scan — Port scan + AI analysis</option>
-            <option value="Network Scan">Network Scan — Map network + ports</option>
-            <option value="Full Recon">Full Recon — Everything</option>
-            <option value="Log Analysis">Log Analysis — Check local logs</option>
-        </select>
+        <label style="margin-top:16px; display:block; color:#aaa; font-size:0.9em;">Select Tools to Run</label>
+        <div class="tool-grid" id="toolGrid">
+            <div class="tool-card" id="card_port_scanner" onclick="toggleTool('port_scanner', this)">
+                <input type="checkbox" name="tools" value="port_scanner" id="port_scanner">
+                <label for="port_scanner">
+                    <div class="tool-name">🔓 Port Scanner</div>
+                    <div class="tool-desc">Scan TCP ports 1–1024 for open services</div>
+                </label>
+            </div>
+            <div class="tool-card" id="card_network_mapper" onclick="toggleTool('network_mapper', this)">
+                <input type="checkbox" name="tools" value="network_mapper" id="network_mapper">
+                <label for="network_mapper">
+                    <div class="tool-name">🖥️ Network Mapper</div>
+                    <div class="tool-desc">Discover live hosts on your subnet</div>
+                </label>
+            </div>
+            <div class="tool-card" id="card_log_analyzer" onclick="toggleTool('log_analyzer', this)">
+                <input type="checkbox" name="tools" value="log_analyzer" id="log_analyzer">
+                <label for="log_analyzer">
+                    <div class="tool-name">📋 Log Analyzer</div>
+                    <div class="tool-desc">Scan local system logs for threats</div>
+                </label>
+            </div>
+            <div class="tool-card" id="card_vuln_reporter" onclick="toggleTool('vuln_reporter', this)">
+                <input type="checkbox" name="tools" value="vuln_reporter" id="vuln_reporter">
+                <label for="vuln_reporter">
+                    <div class="tool-name">⚠️ Vulnerability Reporter</div>
+                    <div class="tool-desc">Map open ports to known CVEs</div>
+                </label>
+            </div>
+            <div class="tool-card" id="card_ai_analysis" onclick="toggleTool('ai_analysis', this)" style="grid-column: span 2;">
+                <input type="checkbox" name="tools" value="ai_analysis" id="ai_analysis">
+                <label for="ai_analysis">
+                    <div class="tool-name">🤖 AI Analysis</div>
+                    <div class="tool-desc">Send findings to Claude for plain-English explanation (requires API key in .env)</div>
+                </label>
+            </div>
+        </div>
 
-        <label>AI Analysis</label>
-        <select name="use_ai">
-            <option value="true">✅ Yes — Explain findings in plain English</option>
-            <option value="false">🔒 No — Offline mode, no data sent anywhere</option>
-        </select>
+        <label style="margin-top:16px; display:block; color:#aaa; font-size:0.9em;">Scan Intensity</label>
+        <div class="intensity-group" id="intensityGroup">
+            <div class="intensity-option selected" id="opt_passive" onclick="selectIntensity('passive', this)">
+                <input type="radio" name="intensity" value="passive" id="int_passive" checked>
+                <label for="int_passive">
+                    <div class="intensity-name">Passive</div>
+                    <div class="intensity-desc">Localhost only</div>
+                </label>
+            </div>
+            <div class="intensity-option" id="opt_normal" onclick="selectIntensity('normal', this)">
+                <input type="radio" name="intensity" value="normal" id="int_normal">
+                <label for="int_normal">
+                    <div class="intensity-name">Normal</div>
+                    <div class="intensity-desc">Standard scan</div>
+                </label>
+            </div>
+            <div class="intensity-option" id="opt_professional" onclick="selectIntensity('professional', this)">
+                <input type="radio" name="intensity" value="professional" id="int_professional">
+                <label for="int_professional">
+                    <div class="intensity-name">Professional</div>
+                    <div class="intensity-desc">Full scan</div>
+                </label>
+            </div>
+        </div>
+        <div class="warn-ids" id="idsWarning">
+            ⚠️ <strong>Professional mode</strong> performs a full scan that may trigger IDS/IPS alerts on monitored networks.
+            Only use on networks you own and control.
+        </div>
 
         <div class="privacy-notice">
-            ⚠️ <strong>Legal Notice:</strong> Recon AI is designed to help you 
-            understand and protect YOUR OWN network. Scanning networks you don't 
-            own is illegal under the Computer Fraud and Abuse Act (CFAA) and 
+            ⚠️ <strong>Legal Notice:</strong> Recon AI is designed to help you
+            understand and protect YOUR OWN network. Scanning networks you don't
+            own is illegal under the Computer Fraud and Abuse Act (CFAA) and
             equivalent laws worldwide.
             <br><br>
             <input type="checkbox" name="authorized" required>
-            I confirm this is my own network and i have authorization to scan it.
+            I confirm this is my own network and I have authorization to scan it.
         </div>
 
         <button type="submit">🔍 Run Scan</button>
     </form>
+
+    <script>
+        function toggleTool(id, card) {
+            const cb = document.getElementById(id);
+            cb.checked = !cb.checked;
+            card.classList.toggle('checked', cb.checked);
+        }
+        function selectIntensity(value, el) {
+            document.querySelectorAll('.intensity-option').forEach(o => o.classList.remove('selected'));
+            el.classList.add('selected');
+            document.getElementById('int_' + value).checked = true;
+            document.getElementById('idsWarning').style.display = (value === 'professional') ? 'block' : 'none';
+        }
+    </script>
 </body>
 </html>

@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request
 from engine import build_scan_summary, calculate_risk_score, get_risk_label
 from ai_assistant import analyze_with_ai
+import markdown as md
 from port_scanner import scan_target
 from network_mapper import scan_subnet
 from log_analyzer import find_log_files, analyze_log, group_findings
@@ -134,35 +135,104 @@ def index():
 @app.route("/scan", methods=["POST"])
 def scan():
     target = request.form.get("target", "").strip()
-    mode = request.form.get("mode", "").strip()
-    use_ai = request.form.get("use_ai") == "true"
+    tools = request.form.getlist("tools")   # list of checked tool values
+    intensity = request.form.get("intensity", "normal").strip()
     timestamp = datetime.datetime.now().isoformat()
 
-    # validate IP unless log analysis
-    if mode != "Log Analysis":
-        if not is_valid_ip(target):
-            return render_template("index.html",
-                error="Invalid IP address. Please enter a valid IPv4 address.")
+    use_ai = "ai_analysis" in tools
+    needs_target = any(t in tools for t in ("port_scanner", "network_mapper", "vuln_reporter"))
 
-    # run the scan
-    report_data = run_scan(target, mode)
-    
-    # calculate risk score
+    # validate IP when a network tool is selected
+    if needs_target and not is_valid_ip(target):
+        return render_template("index.html",
+            error="Invalid IP address. Please enter a valid IPv4 address.")
+
+    if not tools:
+        return render_template("index.html",
+            error="Please select at least one tool to run.")
+
+    report_data = {
+        "mode": "Custom Scan",
+        "target": target,
+        "tools_run": tools,
+        "intensity": intensity,
+    }
+
+    # Port Scanner
+    if "port_scanner" in tools:
+        try:
+            open_ports = scan_target(target)
+        except Exception as e:
+            logger.error(f"Port scan failed: {e}")
+            open_ports = []
+        report_data["open_ports"] = open_ports
+
+    # Network Mapper
+    if "network_mapper" in tools:
+        try:
+            live_hosts = scan_subnet(target)
+        except Exception as e:
+            logger.error(f"Network scan failed: {e}")
+            live_hosts = []
+        report_data["live_hosts"] = live_hosts
+        # also port-scan discovered hosts
+        if live_hosts and "port_scanner" not in tools:
+            all_ports = []
+            for host in live_hosts:
+                try:
+                    all_ports.extend(scan_target(host))
+                except Exception as e:
+                    logger.error(f"Port scan failed on {host}: {e}")
+            report_data.setdefault("open_ports", []).extend(all_ports)
+
+    # Log Analyzer
+    if "log_analyzer" in tools:
+        try:
+            log_files = find_log_files()
+            raw_findings = []
+            for lf in log_files:
+                raw_findings.extend(analyze_log(lf))
+            report_data["log_findings"] = group_findings(raw_findings)
+        except Exception as e:
+            logger.error(f"Log analysis failed: {e}")
+            report_data["log_findings"] = []
+
+    # Vulnerability Reporter (needs open ports)
+    if "vuln_reporter" in tools:
+        open_ports = report_data.get("open_ports", [])
+        port_numbers = []
+        for p in open_ports:
+            try:
+                port_numbers.append(int(p.split()[1].replace(":", "")))
+            except Exception:
+                pass
+        try:
+            report_data["vulnerabilities"] = analyze_ports(
+                port_numbers, target,
+                log_findings=report_data.get("log_findings"),
+                live_hosts=report_data.get("live_hosts"),
+            )
+        except Exception as e:
+            logger.error(f"Vulnerability analysis failed: {e}")
+            report_data["vulnerabilities"] = []
+
+    # Risk score
     score = calculate_risk_score(report_data)
     label, emoji = get_risk_label(score)
     report_data["score"] = score
     report_data["score_label"] = label
     report_data["score_emoji"] = emoji
 
-    # only send to AI if user opted in
+    # AI Analysis
     ai_analysis = None
     if use_ai:
         try:
             summary = build_scan_summary(report_data)
-            ai_analysis = analyze_with_ai(summary)
+            raw = analyze_with_ai(summary)
+            ai_analysis = md.markdown(raw, extensions=["fenced_code", "tables"])
         except Exception as e:
             logger.error(f"AI analysis failed: {e}")
-            ai_analysis = "AI analysis unavailable. Your scan results are shown below."
+            ai_analysis = "<p>AI analysis unavailable. Your scan results are shown below.</p>"
 
     return render_template("results.html",
         report_data=report_data,
