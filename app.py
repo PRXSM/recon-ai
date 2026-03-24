@@ -6,6 +6,7 @@ from port_scanner import scan_target
 from network_mapper import scan_subnet
 from log_analyzer import find_log_files, analyze_log, group_findings
 from vulnerability_reporter import analyze_ports
+from plain_english import explain_port
 from dotenv import load_dotenv
 import datetime
 import logging
@@ -234,9 +235,23 @@ def scan():
             logger.error(f"AI analysis failed: {e}")
             ai_analysis = "<p>AI analysis unavailable. Your scan results are shown below.</p>"
 
+    # Offline explanations — built from plain_english.py when AI is not used
+    offline_explanations = []
+    if not use_ai:
+        open_ports = report_data.get("open_ports", [])
+        port_numbers = []
+        for p in open_ports:
+            try:
+                port_numbers.append(int(p.split()[1].replace(":", "")))
+            except Exception:
+                pass
+        for port in port_numbers:
+            offline_explanations.append({"port": port, **explain_port(port)})
+
     return render_template("results.html",
         report_data=report_data,
         ai_analysis=ai_analysis,
+        offline_explanations=offline_explanations,
         timestamp=timestamp)
 
 # run

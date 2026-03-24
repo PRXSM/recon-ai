@@ -129,6 +129,80 @@
             color: #aaaaaa;
             font-size: 0.85em;
         }
+        .explain-card {
+            background: #111;
+            border: 1px solid #2a2a2a;
+            border-radius: 8px;
+            padding: 18px 20px;
+            margin: 12px 0;
+        }
+        .explain-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        .explain-port-num {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            color: #00bfff;
+            font-weight: bold;
+            font-size: 0.85em;
+            padding: 3px 10px;
+            border-radius: 4px;
+            white-space: nowrap;
+        }
+        .explain-name {
+            color: #e0e0e0;
+            font-weight: bold;
+            font-size: 1.0em;
+        }
+        .explain-badge {
+            margin-left: auto;
+            font-size: 0.78em;
+            font-weight: bold;
+            padding: 3px 10px;
+            border-radius: 4px;
+        }
+        .explain-badge.critical { background: #3a0000; color: #ff4444; border: 1px solid #ff0000; }
+        .explain-badge.high     { background: #2a1000; color: #ff8844; border: 1px solid #ff4444; }
+        .explain-badge.medium   { background: #2a1e00; color: #ffbb44; border: 1px solid #ffaa00; }
+        .explain-badge.low      { background: #001a0a; color: #44cc77; border: 1px solid #00cc44; }
+        .explain-badge.unknown  { background: #1a1a1a; color: #888888; border: 1px solid #444; }
+        .explain-section {
+            margin: 10px 0 4px;
+            font-size: 0.78em;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: #555;
+        }
+        .explain-text {
+            color: #b0b0b0;
+            font-size: 0.9em;
+            line-height: 1.6;
+            margin: 0;
+        }
+        .explain-steps {
+            margin: 4px 0 0 0;
+            padding-left: 20px;
+            color: #b0b0b0;
+            font-size: 0.9em;
+            line-height: 1.8;
+        }
+        .explain-steps li { margin: 0; }
+        .explain-card.border-critical { border-left: 4px solid #ff0000; }
+        .explain-card.border-high     { border-left: 4px solid #ff4444; }
+        .explain-card.border-medium   { border-left: 4px solid #ffaa00; }
+        .explain-card.border-low      { border-left: 4px solid #00cc44; }
+        .explain-card.border-unknown  { border-left: 4px solid #555; }
+        .ai-nudge {
+            margin-top: 20px;
+            padding: 10px 15px;
+            background: #0d1a0d;
+            border-left: 3px solid #00cc44;
+            color: #888;
+            font-size: 0.82em;
+        }
         .count-badge {
             background: #333;
             color: #00bfff;
@@ -208,6 +282,30 @@
     <h2>🤖 Recon AI Says</h2>
     {% if ai_analysis %}
     <div class="ai-box">{{ ai_analysis | safe }}</div>
+    {% elif offline_explanations %}
+    {% for ex in offline_explanations %}
+    <div class="explain-card border-{{ ex.risk_level | lower }}">
+        <div class="explain-header">
+            <span class="explain-port-num">Port {{ ex.port }}</span>
+            <span class="explain-name">{{ ex.name }}</span>
+            <span class="explain-badge {{ ex.risk_level | lower }}">{{ ex.risk_level }}</span>
+        </div>
+        <div class="explain-section">What it is</div>
+        <p class="explain-text">{{ ex.what_it_is }}</p>
+        <div class="explain-section">Why it matters</div>
+        <p class="explain-text">{{ ex.why_its_risky }}</p>
+        <div class="explain-section">How to fix it</div>
+        <ol class="explain-steps">
+            {% for step in ex.fix_steps %}
+            <li>{{ step }}</li>
+            {% endfor %}
+        </ol>
+    </div>
+    {% endfor %}
+    <div class="ai-nudge">
+        🔒 No data was sent anywhere — these explanations are built in.
+        Enable <strong>AI Analysis</strong> for a deeper, personalised explanation of your specific findings.
+    </div>
     {% else %}
     <div class="offline-notice">
         🔒 Offline mode — no data was sent anywhere.
