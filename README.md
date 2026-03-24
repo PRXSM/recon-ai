@@ -1,21 +1,17 @@
 # Recon AI 🔐
-> AI-powered network security for everyone — not just the experts.
+> Network security that actually makes sense — for everyone, not just the people who already know what a CVE is.
 
-Recon AI scans your network, detects vulnerabilities, analyzes system logs,
-and explains every finding in plain English. With or without an AI connection.
-No technical knowledge required.
+Recon AI scans your network, finds vulnerabilities, reads your system logs, and explains what it found in plain English. No jargon. No degree required. Works offline too.
 
 ---
 
-## The Problem Recon AI Solves
+## Why I Built This
 
-Most security tools are built for experts. Nmap, Wireshark, Splunk —
-powerful but completely inaccessible to the people who need security most.
+Most security tools assume you already know what you're doing. They're powerful — and completely useless if you don't already speak the language.
 
-Small businesses. Schools. Clinics. Home users. They have real networks,
-real risks, and zero tools that speak their language.
+Meanwhile, the people who actually need security help the most — small businesses, schools, clinics, solo IT admins — have nothing built for them.
 
-Recon AI fills that gap. One scan. Plain English results. Know exactly what to fix.
+Recon AI is my attempt to fix that. Scan your network, get a score, understand what's wrong, know exactly what to do about it.
 
 ---
 
@@ -24,17 +20,17 @@ Recon AI fills that gap. One scan. Plain English results. Know exactly what to f
 ```
 Open Recon AI in your browser
          ↓
-Choose your tools (port scanner, network mapper, log analyzer, vuln reporter)
+Pick your tools — port scanner, network mapper, log analyzer, vuln reporter
          ↓
-Enter your IP address and run the scan
+Enter your IP and run the scan
          ↓
-Get a network health score (0–100) with risk label
+Get a health score from 0–100
          ↓
-Every finding explained in plain English — with exact fix instructions
+Every finding explained in plain English with step-by-step fix instructions
          ↓
-Optional: AI analysis powered by Claude for deeper explanations
+Optional: send findings to Claude AI for a deeper breakdown
          ↓
-Download your full report as a .txt file anytime
+Download the full report as a .txt file
 ```
 
 ---
@@ -43,67 +39,63 @@ Download your full report as a .txt file anytime
 
 | Tool | What It Does | Status |
 |---|---|---|
-| **Port Scanner** | Scans ports 1–1024. Finds every open door on your network and identifies what's running. | ✅ Complete |
-| **Network Mapper** | Discovers all live devices on a subnet. Answers: what's on my network — and should it be there? | ✅ Complete |
-| **Log Analyzer** | Reads system logs and detects 30+ threat patterns: brute force, privilege escalation, ransomware indicators, crypto mining, and more. | ✅ Complete |
-| **Vulnerability Reporter** | Maps open ports to known security risks with severity ratings. Correlates findings across all tools for smarter analysis. | ✅ Complete |
-| **AI Security Assistant** | Explains everything in plain English using Claude AI. Every finding gets: EXPLAIN → RISK → FIX → VERIFY. | ✅ Complete |
+| **Port Scanner** | Scans ports 1–1024. Finds every open door on your network and identifies what's running behind it. | ✅ Complete |
+| **Network Mapper** | Discovers every live device on your subnet. Useful question: is everything on this list supposed to be here? | ✅ Complete |
+| **Log Analyzer** | Reads your system logs and flags 30+ threat patterns — brute force attempts, privilege escalation, ransomware indicators, crypto mining, and more. | ✅ Complete |
+| **Vulnerability Reporter** | Takes the open ports and cross-references them against known risks. Also factors in what the log analyzer found. | ✅ Complete |
+| **AI Security Assistant** | Sends your findings to Claude and gets back a plain-English breakdown — every finding gets EXPLAIN → RISK → FIX → VERIFY. | ✅ Complete |
 
 ---
 
-## Key Features
+## What's Actually In Here
 
-- 🌐 **Flask Web Interface** — clean browser UI, no command line needed
-- 🧠 **AI-Powered Analysis** — optional Claude integration for deep plain-English explanations
-- 📖 **Offline Mode** — built-in knowledge base explains common findings without any API key
-- 📊 **Network Health Score** — 0 to 100 risk score with GOOD / MODERATE / AT RISK / CRITICAL labels
-- 📄 **Downloadable Reports** — every scan generates a full .txt report you can save and keep
-- 🔒 **Privacy First** — your IP address is never sent to any external service. AI analysis is opt-in only.
-- 🔗 **Cross-Tool Correlation** — log findings escalate port severity automatically (e.g. brute force detected + SSH open = higher risk rating)
-- 🖥️ **Cross-Platform** — macOS, Windows, Linux
+- 🌐 **Runs in your browser** — Flask web interface, no command line needed
+- 🧠 **AI analysis is optional** — useful when you want a deeper explanation, not required for basic scans
+- 📖 **Works offline** — built-in knowledge base explains common findings with zero API calls
+- 📊 **Network health score** — a 0–100 score so you know at a glance how things look
+- 📄 **Downloadable reports** — every scan can be saved as a .txt file
+- 🔒 **Your IP never leaves your machine** — redacted before anything gets sent to Claude
+- 🔗 **Cross-tool logic** — if the log analyzer finds brute force attempts and the port scanner finds SSH open, the vulnerability reporter escalates the severity automatically
+- 🖥️ **macOS, Windows, Linux** — runs on all three
 
 ---
 
-## Tech Stack
+## Stack
 
-| Technology | Role |
+| | |
 |---|---|
-| Python 3 | Core scanning engine and all 5 tools |
-| Flask | Web interface and routing |
-| Claude API (Anthropic) | AI analysis and plain English explanations |
-| python-dotenv | Secure API key management |
-| Standard Library | `socket`, `subprocess`, `re`, `ipaddress`, `platform`, `pathlib` |
+| Python 3 | All 5 scanning tools |
+| Flask | Web interface |
+| Claude API | AI analysis (optional) |
+| python-dotenv | API key management |
+| Standard library | `socket`, `subprocess`, `re`, `ipaddress`, `platform`, `pathlib` |
 
 ---
 
-## Local Setup
+## Running It Locally
 
-### Requirements
-- Python 3.9+
-- An Anthropic API key (only needed for AI analysis — everything else works without it)
-
-### Installation
+You need Python 3.9+ and optionally an Anthropic API key (only if you want the AI analysis — everything else works without it).
 
 ```bash
-# 1. Clone the repo
+# Clone
 git clone https://github.com/PRXSM/recon-ai.git
 cd recon-ai
 
-# 2. Create and activate a virtual environment
+# Virtual environment
 python3 -m venv venv
 source venv/bin/activate        # macOS/Linux
 venv\Scripts\activate           # Windows
 
-# 3. Install dependencies
+# Dependencies
 pip install -r requirements.txt
 
-# 4. Add your API key (only needed for AI analysis)
+# API key — only needed for AI analysis
 cp .env.example .env
-# Open .env and paste your Anthropic API key
+# Open .env and add your Anthropic API key
 
-# 5. Run
+# Run
 python3 app.py
-# → Open http://localhost:5000 in your browser
+# → http://localhost:5000
 ```
 
 ---
@@ -124,68 +116,64 @@ recon-ai/
 │   ├── index.html             # Scan form
 │   └── results.html           # Results display
 ├── .env.example               # API key template
-├── requirements.txt           # Dependencies
+├── requirements.txt
 └── README.md
 ```
 
 ---
 
-## Risk Scoring
+## The Score
 
-Every scan produces a **Network Health Score** from 0–100.
+Every scan produces a health score from 0–100. It's not perfect — no single number ever is — but it gives you a starting point.
 
-| Score | Label | Meaning |
+| Score | Label | What it means |
 |---|---|---|
-| 80–100 | 🟢 GOOD | Looking solid. Keep it maintained. |
-| 60–79 | 🟡 MODERATE | Some findings worth addressing. |
-| 40–59 | 🟠 AT RISK | Real vulnerabilities present. Act soon. |
-| 0–39 | 🔴 CRITICAL | Immediate attention required. |
+| 80–100 | 🟢 GOOD | Looking solid. Stay on top of updates. |
+| 60–79 | 🟡 MODERATE | Some things worth looking at. Not urgent, but don't ignore it. |
+| 40–59 | 🟠 AT RISK | Real issues here. Worth addressing soon. |
+| 0–39 | 🔴 CRITICAL | Something needs attention now. |
 
-Score deductions: open ports (-2 each), vulnerabilities (CRITICAL -20, HIGH -10, MEDIUM -5, LOW -2), log findings (up to -10 each).
-
----
-
-## Privacy Architecture
-
-- **Your IP never leaves your machine** — redacted from all AI submissions
-- **AI analysis is opt-in** — checkbox in the scan form, disabled by default
-- **Offline mode available** — full plain-English explanations with zero API calls
-- **No data stored on any server** — everything runs locally
-- **Your API key stays local** — stored in `.env`, never uploaded
+Deductions: -2 per open port, up to -20 per critical vulnerability, up to -10 per log finding.
 
 ---
 
-## Current Development Status
+## Privacy
 
-| Phase | Description | Status |
+- Your IP is never sent anywhere — redacted before any AI call is made
+- AI analysis is opt-in — there's a checkbox, it's off by default
+- The offline mode sends nothing at all
+- Everything runs locally — no accounts, no server, no data collection
+- Your API key lives in `.env` and never gets uploaded
+
+---
+
+## Where Things Stand
+
+| | | |
 |---|---|---|
-| Phase 1 | 5 Core Tools | ✅ Complete |
-| Phase 2 | Unified Engine — risk scoring, OS detection, IP redaction | ✅ Complete |
-| Phase 3 | Flask Web Interface — browser UI, AI opt-in, offline mode | ✅ Complete |
-| Phase 4 | 30+ threat patterns, cross-tool correlation, markdown rendering, downloadable reports | ✅ Complete |
-| Phase 5 | UI redesign — single page dashboard, mobile friendly | 🔨 In Progress |
-| Phase 6 | Network Intelligence — ARP, netstat, packet capture explained | 📋 Planned |
-| Phase 7 | Deploy Online — HTTPS, rate limiting, GDPR compliance | 📋 Planned |
-| Phase 8 | Monetization — scheduled scans, premium features | 📋 Planned |
+| ✅ | 5 core scanning tools | Done |
+| ✅ | Unified engine — risk scoring, OS detection, IP redaction | Done |
+| ✅ | Flask web interface — browser UI, AI opt-in, offline mode | Done |
+| ✅ | 30+ threat patterns, cross-tool correlation, downloadable reports | Done |
+| 🔨 | Network intelligence — ARP, netstat, and more explained in plain English | In progress |
+| 📋 | UI redesign | Planned |
+| 📋 | More coming | — |
 
 ---
 
-## Legal & Ethics
+## Legal
 
-> **Only scan networks you own or have explicit written permission to scan.**
-> Unauthorized network scanning is illegal under the Computer Fraud and Abuse Act (CFAA)
-> and equivalent laws worldwide. Recon AI requires authorization confirmation before every scan.
-> This tool is built FOR defenders — not pointed AT others.
+> Scan networks you own or have explicit permission to scan. Unauthorized scanning is illegal under the CFAA and equivalent laws worldwide. Recon AI asks for authorization confirmation before every scan. This is a defensive tool — built to help you understand your own network.
 
 ---
 
-## Vision
+## The Person I'm Building This For
 
-> *"The school IT admin in rural Virginia. One person managing 200 devices,
-> no security budget, no security training. Every Monday morning Recon AI
-> sends them a simple email — green, yellow, or red. That's it."*
+There's a school IT admin somewhere managing 200 devices alone, no security budget, no security training, no time. Every Monday morning they just need to know: is everything okay?
 
-Every decision in this project is built with that person in mind.
+Green, yellow, or red. That's it.
+
+That's who every decision in this project is built around.
 
 ---
 
@@ -193,7 +181,6 @@ Every decision in this project is built with that person in mind.
 
 **Asama Azim** — IT & Cybersecurity | Network+ Certified | Security+ in progress
 
-Built as an intensive self-directed learning project. Every concept — networking,
-Python, Flask, cybersecurity — learned from scratch and applied immediately.
+Built over a few days as a self-directed learning project — networking, Python, Flask, and cybersecurity all learned from scratch and applied immediately. Still building.
 
 [GitHub](https://github.com/PRXSM) | [LinkedIn](https://linkedin.com/in/asama-azim-38a0b391)
