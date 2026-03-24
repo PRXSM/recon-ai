@@ -22,7 +22,7 @@ PATTERNS = {
         "description": "Possible brute force attack - multiple failed logins"
     },
     "root_access": {
-        "regex": r"sudo|root|superuser",
+        "regex": r"sudo\s|switched to root|su root|superuser access|running as root",
         "risk": "MEDIUM",
         "description": "Elevated privilege activity detected."
     },

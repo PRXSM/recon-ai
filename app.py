@@ -1,5 +1,6 @@
-from flask import Flask, render_template, request
-from engine import build_scan_summary, calculate_risk_score, get_risk_label
+from flask import Flask, render_template, request, send_file
+import io
+from engine import build_scan_summary, calculate_risk_score, get_risk_label, parse_port_number
 from ai_assistant import analyze_with_ai
 import markdown as md
 from port_scanner import scan_target
@@ -73,10 +74,10 @@ def full_recon(target):
     port_numbers = []
     for p in open_ports:
         try:
-            port_num = int(p.split()[1].replace(":", ""))
+            port_num = parse_port_number(p)
             port_numbers.append(port_num)
-        except:
-            pass
+        except Exception as e:
+            logger.warning(f"Could not parse port string '{p}': {e}")
     try:
         vuln_findings = analyze_ports(port_numbers, target)
     except Exception as e:
@@ -115,18 +116,47 @@ def log_analysis():
         "log_findings": log_findings
     }
 
-# run scan — routes to the right function
-def run_scan(target, mode):
-    if mode == "Quick Scan":
-        return quick_scan(target)
-    elif mode == "Network Scan":
-        return network_scan(target)
-    elif mode == "Full Recon":
-        return full_recon(target)
-    elif mode == "Log Analysis":
-        return log_analysis()
-    else:
-        return {"mode": "Unknown", "error": "Invalid scan mode selected"}
+def build_text_report(report_data, ai_analysis, timestamp):
+    lines = []
+    lines.append("=" * 50)
+    lines.append("       RECON AI — NETWORK REPORT")
+    lines.append("=" * 50)
+    lines.append(f"Mode: {report_data.get('mode', 'Unknown')}")
+    lines.append(f"Time: {timestamp}")
+    if report_data.get("score") is not None:
+        lines.append(f"Network Health Score: {report_data['score']}/100 — {report_data.get('score_label', '')}")
+    lines.append("=" * 50)
+
+    if report_data.get("open_ports"):
+        lines.append("\nOPEN PORTS:")
+        for port in report_data["open_ports"]:
+            lines.append(f"  {port}")
+
+    if report_data.get("live_hosts"):
+        lines.append("\nDEVICES FOUND ON YOUR NETWORK:")
+        for host in report_data["live_hosts"]:
+            lines.append(f"  {host}")
+
+    if report_data.get("vulnerabilities"):
+        lines.append("\nVULNERABILITIES:")
+        for v in report_data["vulnerabilities"]:
+            lines.append(f"  [{v['severity']}] Port {v['port']} — {v['service']}")
+            lines.append(f"    {v['description']}")
+            lines.append(f"    Recommendation: {v['recommendation']}")
+
+    if report_data.get("log_findings"):
+        lines.append("\nLOG FINDINGS:")
+        for f in report_data["log_findings"]:
+            lines.append(f"  [{f['risk']}] {f['description']} — {f['count']}x detected")
+
+    if ai_analysis:
+        lines.append("\n" + "=" * 50)
+        lines.append("RECON AI ANALYSIS:")
+        lines.append("=" * 50)
+        clean = re.sub(r'<[^>]+>', '', ai_analysis)
+        lines.append(clean)
+
+    return "\n".join(lines)
 
 # routes
 @app.route("/")
@@ -135,7 +165,7 @@ def index():
 
 @app.route("/scan", methods=["POST"])
 def scan():
-    target = request.form.get("target", "").strip()
+    ip = request.form.get("target", "").strip()
     tools = request.form.getlist("tools")   # list of checked tool values
     intensity = request.form.get("intensity", "normal").strip()
     timestamp = datetime.datetime.now().isoformat()
@@ -144,7 +174,7 @@ def scan():
     needs_target = any(t in tools for t in ("port_scanner", "network_mapper", "vuln_reporter"))
 
     # validate IP when a network tool is selected
-    if needs_target and not is_valid_ip(target):
+    if needs_target and not is_valid_ip(ip):
         return render_template("index.html",
             error="Invalid IP address. Please enter a valid IPv4 address.")
 
@@ -154,7 +184,7 @@ def scan():
 
     report_data = {
         "mode": "Custom Scan",
-        "target": target,
+        "target": ip,
         "tools_run": tools,
         "intensity": intensity,
     }
@@ -162,7 +192,7 @@ def scan():
     # Port Scanner
     if "port_scanner" in tools:
         try:
-            open_ports = scan_target(target)
+            open_ports = scan_target(ip)
         except Exception as e:
             logger.error(f"Port scan failed: {e}")
             open_ports = []
@@ -171,7 +201,7 @@ def scan():
     # Network Mapper
     if "network_mapper" in tools:
         try:
-            live_hosts = scan_subnet(target)
+            live_hosts = scan_subnet(ip)
         except Exception as e:
             logger.error(f"Network scan failed: {e}")
             live_hosts = []
@@ -204,12 +234,12 @@ def scan():
         port_numbers = []
         for p in open_ports:
             try:
-                port_numbers.append(int(p.split()[1].replace(":", "")))
+                port_numbers.append(parse_port_number(p))
             except Exception:
                 pass
         try:
             report_data["vulnerabilities"] = analyze_ports(
-                port_numbers, target,
+                port_numbers, ip,
                 log_findings=report_data.get("log_findings"),
                 live_hosts=report_data.get("live_hosts"),
             )
@@ -242,18 +272,34 @@ def scan():
         port_numbers = []
         for p in open_ports:
             try:
-                port_numbers.append(int(p.split()[1].replace(":", "")))
+                port_numbers.append(parse_port_number(p))
             except Exception:
                 pass
         for port in port_numbers:
             offline_explanations.append({"port": port, **explain_port(port)})
 
+    text_report = build_text_report(report_data, ai_analysis, timestamp)
     return render_template("results.html",
         report_data=report_data,
         ai_analysis=ai_analysis,
         offline_explanations=offline_explanations,
-        timestamp=timestamp)
+        timestamp=timestamp,
+        text_report=text_report)
+
+@app.route("/download-report", methods=["POST"])
+def download_report():
+    report_text = request.form.get("report_text", "")
+    timestamp = request.form.get("timestamp", datetime.datetime.now().isoformat())
+    safe_ts = timestamp.replace(":", "-").replace(".", "-")
+    buffer = io.BytesIO(report_text.encode("utf-8"))
+    buffer.seek(0)
+    return send_file(
+        buffer,
+        mimetype="text/plain",
+        as_attachment=True,
+        download_name=f"recon_ai_report_{safe_ts}.txt"
+    )
 
 # run
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=False)

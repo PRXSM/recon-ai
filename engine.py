@@ -10,6 +10,10 @@ from ai_assistant import analyze_with_ai
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
+def parse_port_number(port_string):
+    """Extract the integer port number from a scan result string like 'Port 80: OPEN (HTTP)'."""
+    return int(port_string.split()[1].replace(":", ""))
+
 SCAN_MODES = {
     "1": "Quick Scan      — Port scan + AI analysis",
     "2": "Network Scan    — Map network + Port scan + AI analysis",

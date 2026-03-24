@@ -314,6 +314,11 @@
     </div>
     {% endif %}
 
+    <form action="/download-report" method="POST" style="display:inline;">
+        <input type="hidden" name="report_text" value="{{ text_report }}">
+        <input type="hidden" name="timestamp" value="{{ timestamp }}">
+        <button type="submit" class="back-btn" style="margin-right:10px; cursor:pointer; border:none;">📄 Download Full Report</button>
+    </form>
     <a href="/" class="back-btn">← Scan Again</a>
 
 </body>
