@@ -1,7 +1,7 @@
 # Recon AI 🔐
 > Network security that actually makes sense — for everyone, not just the people who already know what a CVE is.
 
-Recon AI scans your network, finds vulnerabilities, reads your system logs, and explains what it found in plain English. No jargon. No degree required. Works offline too.
+Recon AI scans your network, finds vulnerabilities, reads your system logs, and explains what it found in plain English. No jargon. No degree required. No API key required.
 
 ---
 
@@ -12,6 +12,16 @@ Most security tools assume you already know what you're doing. They're powerful 
 Meanwhile, the people who actually need security help the most — small businesses, schools, clinics, solo IT admins — have nothing built for them.
 
 Recon AI is my attempt to fix that. Scan your network, get a score, understand what's wrong, know exactly what to do about it.
+
+---
+
+## One Thing Worth Knowing Before Anything Else
+
+You don't need an API key to use Recon AI.
+
+There's a built-in knowledge base that explains every finding it surfaces — what the open port is, why it matters, who could exploit it, and exactly how to fix it. Step by step. No data sent anywhere. No account needed. Nothing.
+
+The AI analysis (powered by Claude) is there when you want a deeper, more personalized breakdown. But the assistant that walks you through your results? That's built in and it's free.
 
 ---
 
@@ -35,6 +45,14 @@ Download the full report as a .txt file
 
 ---
 
+## What Makes This Different
+
+You could paste a security report into an ChatGPT or Claude and ask it to explain things. That works. But they can't ping your subnet. They can't open a socket and check what's actually running on your router right now. They can't read your local system logs.
+
+Recon AI runs locally on your machine — which means it has access to things no external tool ever could. The AI analysis is just the explanation layer on top of real local data that only you can collect.
+
+---
+
 ## The 5 Tools
 
 | Tool | What It Does | Status |
@@ -50,8 +68,8 @@ Download the full report as a .txt file
 ## What's Actually In Here
 
 - 🌐 **Runs in your browser** — Flask web interface, no command line needed
-- 🧠 **AI analysis is optional** — useful when you want a deeper explanation, not required for basic scans
-- 📖 **Works offline** — built-in knowledge base explains common findings with zero API calls
+- 📖 **Built-in assistant, no API key needed** — explains every finding offline, zero data sent anywhere
+- 🧠 **Optional AI analysis** — Claude gives a deeper, more personalized breakdown when you want it
 - 📊 **Network health score** — a 0–100 score so you know at a glance how things look
 - 📄 **Downloadable reports** — every scan can be saved as a .txt file
 - 🔒 **Your IP never leaves your machine** — redacted before anything gets sent to Claude
@@ -74,7 +92,7 @@ Download the full report as a .txt file
 
 ## Running It Locally
 
-You need Python 3.9+ and optionally an Anthropic API key (only if you want the AI analysis — everything else works without it).
+You need Python 3.9+. An Anthropic API key is optional — only needed if you want the AI analysis.
 
 ```bash
 # Clone
