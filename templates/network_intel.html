@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recon AI — Network Intelligence</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #0a0a0a;
+            color: #e0e0e0;
+            max-width: 760px;
+            margin: 60px auto;
+            padding: 20px;
+        }
+        h1 { color: #00bfff; }
+        h2 { color: #00bfff; margin-top: 36px; }
+        p  { color: #aaaaaa; }
+
+        .iface-block {
+            background: #111;
+            border: 1px solid #2a2a2a;
+            border-radius: 10px;
+            padding: 20px 24px;
+            margin: 20px 0;
+        }
+        .iface-title {
+            font-size: 1.15em;
+            font-weight: bold;
+            color: #00bfff;
+            margin-bottom: 4px;
+        }
+        .iface-subtitle {
+            font-size: 0.8em;
+            color: #555;
+            margin-bottom: 16px;
+        }
+
+        .field-row {
+            display: flex;
+            gap: 16px;
+            border-bottom: 1px solid #1e1e1e;
+            padding: 14px 0;
+            align-items: flex-start;
+        }
+        .field-row:last-child { border-bottom: none; }
+
+        .field-label {
+            min-width: 110px;
+            font-size: 0.75em;
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+            color: #555;
+            padding-top: 3px;
+            flex-shrink: 0;
+        }
+        .field-value {
+            font-family: monospace;
+            font-size: 0.95em;
+            color: #7fd8ff;
+            min-width: 140px;
+            flex-shrink: 0;
+            word-break: break-all;
+        }
+        .field-value.none {
+            color: #444;
+            font-style: italic;
+            font-family: Arial, sans-serif;
+            font-size: 0.85em;
+        }
+        .field-explain {
+            flex: 1;
+        }
+        .explain-what {
+            font-size: 0.88em;
+            color: #c0c0c0;
+            line-height: 1.5;
+            margin: 0 0 6px 0;
+        }
+        .explain-toggle {
+            font-size: 0.75em;
+            color: #00bfff;
+            cursor: pointer;
+            background: none;
+            border: none;
+            padding: 0;
+            text-decoration: underline;
+        }
+        .explain-detail {
+            display: none;
+            margin-top: 8px;
+        }
+        .explain-detail.open { display: block; }
+        .detail-row {
+            margin: 5px 0;
+            font-size: 0.82em;
+            color: #888;
+            line-height: 1.5;
+        }
+        .detail-label {
+            color: #555;
+            text-transform: uppercase;
+            font-size: 0.75em;
+            letter-spacing: 0.05em;
+            display: block;
+            margin-bottom: 2px;
+        }
+        .bad-value-text {
+            color: #ff8844;
+        }
+
+        .no-ifaces {
+            background: #1a1a1a;
+            border-left: 3px solid #ff4444;
+            padding: 14px 18px;
+            color: #aaa;
+            font-size: 0.9em;
+        }
+
+        .back-btn {
+            display: inline-block;
+            margin-top: 30px;
+            padding: 10px 20px;
+            background: #00bfff;
+            color: #000;
+            font-weight: bold;
+            border-radius: 5px;
+            text-decoration: none;
+        }
+        .back-btn.secondary {
+            background: #1a1a1a;
+            color: #00bfff;
+            border: 1px solid #00bfff;
+            margin-left: 10px;
+        }
+
+        .privacy-note {
+            background: #0d1a0d;
+            border-left: 3px solid #00cc44;
+            padding: 10px 15px;
+            color: #888;
+            font-size: 0.82em;
+            margin: 20px 0;
+        }
+
+        .dns-list {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+        .dns-list li {
+            font-family: monospace;
+            font-size: 0.92em;
+            color: #7fd8ff;
+            display: inline;
+        }
+        .dns-list li + li::before {
+            content: ", ";
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <h1>🌐 Network Intelligence</h1>
+    <p>A plain-English breakdown of every network interface on this machine — what each value means, why it matters, and what a bad value looks like.</p>
+
+    <div class="privacy-note">
+        🔒 This page reads your local network configuration only. Nothing is sent anywhere.
+    </div>
+
+    {% if not interfaces %}
+    <div class="no-ifaces">
+        Could not read network interface data. Make sure <code>ifconfig</code> (Mac/Linux)
+        or <code>ipconfig</code> (Windows) is available and try again.
+    </div>
+    {% else %}
+
+    {% for name, iface in interfaces.items() %}
+    {% set ex = explanations.get(name, {}) %}
+    <div class="iface-block">
+        <div class="iface-title">{{ name }}</div>
+        <div class="iface-subtitle">{{ ex.get('name', {}).get('what', '') }}</div>
+
+        {# MAC #}
+        <div class="field-row">
+            <div class="field-label">MAC Address</div>
+            <div class="field-value {% if not iface.mac_address %}none{% endif %}">
+                {{ iface.mac_address or "—" }}
+            </div>
+            <div class="field-explain">
+                {% set f = ex.get('mac_address', {}) %}
+                <p class="explain-what">{{ f.get('what', '') }}</p>
+                <button class="explain-toggle" onclick="toggleDetail(this)">Why it matters ▾</button>
+                <div class="explain-detail">
+                    <div class="detail-row">
+                        <span class="detail-label">Why it matters</span>
+                        {{ f.get('why', '') }}
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">What a bad value looks like</span>
+                        <span class="bad-value-text">{{ f.get('bad_value', '') }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {# IPv4 #}
+        <div class="field-row">
+            <div class="field-label">IPv4 Address</div>
+            <div class="field-value {% if not iface.ipv4 %}none{% endif %}">
+                {{ iface.ipv4 or "—" }}
+            </div>
+            <div class="field-explain">
+                {% set f = ex.get('ipv4', {}) %}
+                <p class="explain-what">{{ f.get('what', '') }}</p>
+                <button class="explain-toggle" onclick="toggleDetail(this)">Why it matters ▾</button>
+                <div class="explain-detail">
+                    <div class="detail-row">
+                        <span class="detail-label">Why it matters</span>
+                        {{ f.get('why', '') }}
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">What a bad value looks like</span>
+                        <span class="bad-value-text">{{ f.get('bad_value', '') }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {# IPv6 #}
+        <div class="field-row">
+            <div class="field-label">IPv6 Address</div>
+            <div class="field-value {% if not iface.ipv6 %}none{% endif %}">
+                {{ iface.ipv6 or "—" }}
+            </div>
+            <div class="field-explain">
+                {% set f = ex.get('ipv6', {}) %}
+                <p class="explain-what">{{ f.get('what', '') }}</p>
+                <button class="explain-toggle" onclick="toggleDetail(this)">Why it matters ▾</button>
+                <div class="explain-detail">
+                    <div class="detail-row">
+                        <span class="detail-label">Why it matters</span>
+                        {{ f.get('why', '') }}
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">What a bad value looks like</span>
+                        <span class="bad-value-text">{{ f.get('bad_value', '') }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {# Subnet Mask #}
+        <div class="field-row">
+            <div class="field-label">Subnet Mask</div>
+            <div class="field-value {% if not iface.subnet_mask %}none{% endif %}">
+                {{ iface.subnet_mask or "—" }}
+            </div>
+            <div class="field-explain">
+                {% set f = ex.get('subnet_mask', {}) %}
+                <p class="explain-what">{{ f.get('what', '') }}</p>
+                <button class="explain-toggle" onclick="toggleDetail(this)">Why it matters ▾</button>
+                <div class="explain-detail">
+                    <div class="detail-row">
+                        <span class="detail-label">Why it matters</span>
+                        {{ f.get('why', '') }}
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">What a bad value looks like</span>
+                        <span class="bad-value-text">{{ f.get('bad_value', '') }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {# Gateway #}
+        <div class="field-row">
+            <div class="field-label">Gateway</div>
+            <div class="field-value {% if not iface.gateway %}none{% endif %}">
+                {{ iface.gateway or "—" }}
+            </div>
+            <div class="field-explain">
+                {% set f = ex.get('gateway', {}) %}
+                <p class="explain-what">{{ f.get('what', '') }}</p>
+                <button class="explain-toggle" onclick="toggleDetail(this)">Why it matters ▾</button>
+                <div class="explain-detail">
+                    <div class="detail-row">
+                        <span class="detail-label">Why it matters</span>
+                        {{ f.get('why', '') }}
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">What a bad value looks like</span>
+                        <span class="bad-value-text">{{ f.get('bad_value', '') }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {# DNS #}
+        <div class="field-row">
+            <div class="field-label">DNS Servers</div>
+            <div class="field-value {% if not iface.dns_servers %}none{% endif %}">
+                {% if iface.dns_servers %}
+                <ul class="dns-list">
+                    {% for s in iface.dns_servers %}<li>{{ s }}</li>{% endfor %}
+                </ul>
+                {% else %}
+                —
+                {% endif %}
+            </div>
+            <div class="field-explain">
+                {% set f = ex.get('dns_servers', {}) %}
+                <p class="explain-what">{{ f.get('what', '') }}</p>
+                <button class="explain-toggle" onclick="toggleDetail(this)">Why it matters ▾</button>
+                <div class="explain-detail">
+                    <div class="detail-row">
+                        <span class="detail-label">Why it matters</span>
+                        {{ f.get('why', '') }}
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">What a bad value looks like</span>
+                        <span class="bad-value-text">{{ f.get('bad_value', '') }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    {% endfor %}
+
+    {% endif %}
+
+    <a href="/" class="back-btn">← Back to Scanner</a>
+
+    <script>
+        function toggleDetail(btn) {
+            const detail = btn.nextElementSibling;
+            const open = detail.classList.toggle('open');
+            btn.textContent = open ? 'Hide details ▴' : 'Why it matters ▾';
+        }
+    </script>
+</body>
+</html>

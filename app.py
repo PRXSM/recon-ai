@@ -8,6 +8,7 @@ from network_mapper import scan_subnet
 from log_analyzer import find_log_files, analyze_log, group_findings
 from vulnerability_reporter import analyze_ports
 from plain_english import explain_port
+from network_intel import get_network_interfaces, explain_interface
 from dotenv import load_dotenv
 import datetime
 import logging
@@ -285,6 +286,15 @@ def scan():
         offline_explanations=offline_explanations,
         timestamp=timestamp,
         text_report=text_report)
+
+@app.route("/network-intel")
+def network_intel():
+    interfaces = get_network_interfaces()
+    explanations = explain_interface(interfaces)
+    return render_template("network_intel.html",
+        interfaces=interfaces,
+        explanations=explanations)
+
 
 @app.route("/download-report", methods=["POST"])
 def download_report():
