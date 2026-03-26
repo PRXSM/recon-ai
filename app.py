@@ -8,7 +8,12 @@ from network_mapper import scan_subnet
 from log_analyzer import find_log_files, analyze_log, group_findings
 from vulnerability_reporter import analyze_ports
 from plain_english import explain_port
-from network_intel import get_network_interfaces, explain_interface
+from network_intel import (
+    get_network_interfaces, explain_interface, group_interfaces,
+    get_arp_table, explain_arp_entry,
+    get_active_connections, group_connections, explain_connection,
+    run_traceroute, explain_hop,
+)
 from dotenv import load_dotenv
 import datetime
 import logging
@@ -24,11 +29,21 @@ app = Flask(__name__)
 
 # input validation
 def is_valid_ip(ip):
+    # Strip optional CIDR suffix before validating the IP part
+    host = ip.split("/")[0]
     pattern = r"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$"
-    if not re.match(pattern, ip):
+    if not re.match(pattern, host):
         return False
-    parts = ip.split(".")
-    return all(0 <= int(p) <= 255 for p in parts)
+    if not all(0 <= int(p) <= 255 for p in host.split(".")):
+        return False
+    # If CIDR present, validate prefix length (0–32)
+    if "/" in ip:
+        try:
+            prefix = int(ip.split("/")[1])
+            return 0 <= prefix <= 32
+        except ValueError:
+            return False
+    return True
 
 # scan modes — each in its own function
 def quick_scan(target):
@@ -263,7 +278,7 @@ def scan():
             raw = analyze_with_ai(summary)
             ai_analysis = md.markdown(raw, extensions=["fenced_code", "tables"])
         except Exception as e:
-            logger.error(f"AI analysis failed: {e}")
+            logger.error(f"AI analysis failed: {e}", exc_info=True)
             ai_analysis = "<p>AI analysis unavailable. Your scan results are shown below.</p>"
 
     # Offline explanations — built from plain_english.py when AI is not used
@@ -289,11 +304,58 @@ def scan():
 
 @app.route("/network-intel")
 def network_intel():
-    interfaces = get_network_interfaces()
+    interfaces   = get_network_interfaces()
     explanations = explain_interface(interfaces)
+    grouped      = group_interfaces(interfaces)
     return render_template("network_intel.html",
         interfaces=interfaces,
-        explanations=explanations)
+        explanations=explanations,
+        grouped=grouped)
+
+
+@app.route("/arp-table")
+def arp_table():
+    interfaces = get_network_interfaces()
+    gateway    = next((i["gateway"] for i in interfaces.values() if i.get("gateway")), None)
+    entries    = get_arp_table()
+    exps       = [explain_arp_entry(e, gateway=gateway) for e in entries]
+    incomplete = sum(1 for e in entries if e.get("type") == "incomplete")
+    return render_template("arp_table.html",
+        items=list(zip(entries, exps)), gateway=gateway,
+        total=len(entries), incomplete=incomplete)
+
+
+@app.route("/netstat")
+def netstat():
+    conns = get_active_connections()
+    state_order = ['LISTEN', 'ESTABLISHED', 'CLOSE_WAIT', 'TIME_WAIT', 'OTHER']
+    buckets = {s: [] for s in state_order}
+    for conn in conns:
+        state = conn.get('state', '').upper()
+        if state in ('LISTEN', 'LISTENING'):
+            key = 'LISTEN'
+        elif state == 'ESTABLISHED':
+            key = 'ESTABLISHED'
+        elif state == 'CLOSE_WAIT':
+            key = 'CLOSE_WAIT'
+        elif state == 'TIME_WAIT':
+            key = 'TIME_WAIT'
+        else:
+            key = 'OTHER'
+        buckets[key].append({'conn': conn, 'ex': explain_connection(conn)})
+    grouped = [(s, buckets[s]) for s in state_order if buckets[s]]
+    return render_template("netstat.html", grouped=grouped, total=len(conns))
+
+
+@app.route("/traceroute")
+def traceroute_view():
+    host = request.args.get("host", "8.8.8.8").strip()
+    if not re.match(r'^[a-zA-Z0-9.\-]+$', host):
+        host = "8.8.8.8"
+    hops, error = run_traceroute(host)
+    exps        = [explain_hop(h) for h in hops]
+    return render_template("traceroute.html",
+        items=list(zip(hops, exps)), host=host, error=error)
 
 
 @app.route("/download-report", methods=["POST"])
@@ -312,4 +374,4 @@ def download_report():
 
 # run
 if __name__ == "__main__":
-    app.run(debug=False)
+    app.run(debug=False, threaded=True)

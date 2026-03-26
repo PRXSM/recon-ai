@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recon AI — Active Connections</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #0a0a0a;
+            color: #e0e0e0;
+            max-width: 760px;
+            margin: 60px auto;
+            padding: 20px;
+        }
+        h1 { color: #00bfff; margin-bottom: 4px; }
+        .subtitle { color: #555; font-size: 0.85em; margin-bottom: 24px; }
+
+        .p5nav { display: flex; gap: 8px; margin-bottom: 28px; flex-wrap: wrap; }
+        .p5nav a {
+            padding: 7px 14px; border-radius: 6px; font-size: 0.8em; font-weight: bold;
+            text-decoration: none; border: 1px solid #222; background: #111; color: #555;
+            transition: all 0.15s;
+        }
+        .p5nav a:hover { border-color: #00bfff; color: #00bfff; }
+        .p5nav a.active { background: #0d1f2d; border-color: #00bfff; color: #00bfff; }
+
+        /* ── state group ── */
+        .state-group { margin-bottom: 16px; }
+        .state-header {
+            display: flex; align-items: center; gap: 10px;
+            padding: 11px 14px; cursor: pointer; user-select: none;
+            background: #0e0e0e; border: 1px solid #1e1e1e; border-radius: 7px;
+            transition: background 0.15s;
+        }
+        .state-header:hover { background: #141414; }
+        .state-header.open  { border-radius: 7px 7px 0 0; border-bottom-color: #1a2a2a; background: #0d1a26; }
+        .state-label {
+            font-size: 0.8em; font-weight: bold; text-transform: uppercase;
+            letter-spacing: 0.08em; min-width: 110px;
+        }
+        .state-label.LISTEN      { color: #4488cc; }
+        .state-label.ESTABLISHED { color: #44cc77; }
+        .state-label.CLOSE_WAIT  { color: #cc8844; }
+        .state-label.TIME_WAIT   { color: #8888aa; }
+        .state-label.OTHER       { color: #555; }
+        .state-desc { color: #444; font-size: 0.78em; flex: 1; }
+        .state-count {
+            font-size: 0.72em; padding: 2px 8px; border-radius: 10px;
+            border: 1px solid #222; color: #555;
+        }
+        .state-chevron { color: #333; font-size: 0.75em; transition: transform 0.2s; }
+        .state-header.open .state-chevron { transform: rotate(180deg); color: #00bfff; }
+
+        .state-body {
+            display: none;
+            border: 1px solid #1e1e1e; border-top: none;
+            border-radius: 0 0 7px 7px; background: #0b0b0b;
+        }
+        .state-body.open { display: block; }
+
+        /* ── connection row ── */
+        .conn-item { border-bottom: 1px solid #141414; overflow: hidden; }
+        .conn-item:last-child { border-bottom: none; }
+        .conn-header {
+            display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+            padding: 10px 14px; cursor: pointer; user-select: none; transition: background 0.15s;
+        }
+        .conn-header:hover { background: #0f0f0f; }
+        .conn-header.open  { background: #0d1218; }
+        .conn-proto { font-size: 0.7em; font-weight: bold; color: #447799; min-width: 30px; }
+        .conn-local { font-family: monospace; font-size: 0.82em; color: #888; }
+        .conn-arrow { color: #333; font-size: 0.72em; }
+        .conn-remote { font-family: monospace; font-size: 0.82em; color: #7fd8ff; flex: 1; }
+        .conn-risk {
+            font-size: 0.68em; font-weight: bold; padding: 2px 7px;
+            border-radius: 10px; border: 1px solid;
+        }
+        .conn-risk.high   { border-color: #551111; color: #cc4444; background: #1a0808; }
+        .conn-risk.medium { border-color: #554400; color: #cc9933; background: #1a1400; }
+        .conn-risk.low    { border-color: #333; color: #666; }
+        .conn-chevron { color: #2a2a2a; font-size: 0.7em; transition: transform 0.2s; }
+        .conn-header.open .conn-chevron { transform: rotate(180deg); }
+
+        .conn-body {
+            display: none; padding: 9px 14px 11px 38px;
+            background: #080808; border-top: 1px solid #111;
+        }
+        .conn-body.open { display: block; }
+        .conn-what { font-size: 0.83em; color: #aaaaaa; margin: 0 0 6px; line-height: 1.5; }
+        .conn-flag {
+            padding: 6px 10px; background: #140f00; border-left: 2px solid #554400;
+            font-size: 0.79em; color: #887733; line-height: 1.5;
+        }
+
+        .summary-bar { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+        .summary-chip {
+            padding: 5px 12px; border-radius: 6px; font-size: 0.78em; font-weight: bold;
+            background: #111; border: 1px solid #1e1e1e; color: #666;
+        }
+        .summary-chip span { color: #00bfff; }
+
+        .privacy-note {
+            background: #0d1a0d; border-left: 3px solid #1a4a1a;
+            padding: 8px 13px; color: #3a5a3a; font-size: 0.78em; margin-bottom: 20px;
+        }
+        .back-btn {
+            display: inline-block; margin-top: 28px; padding: 10px 20px;
+            background: #00bfff; color: #000; font-weight: bold;
+            border-radius: 5px; text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔌 Active Connections</h1>
+    <p class="subtitle">Everything your machine is currently listening for or connected to, grouped by state.</p>
+
+    <nav class="p5nav">
+        <a href="/network-intel">🌐 Interfaces</a>
+        <a href="/arp-table">📡 ARP Table</a>
+        <a href="/netstat" class="active">🔌 Connections</a>
+        <a href="/traceroute">🗺️ Traceroute</a>
+    </nav>
+
+    <div class="privacy-note">🔒 Reads your local socket table — no traffic is captured or sent anywhere.</div>
+
+    <div class="summary-bar">
+        <div class="summary-chip">Total: <span>{{ total }}</span></div>
+        {% for state, rows in grouped %}
+        <div class="summary-chip">{{ state }}: <span>{{ rows | length }}</span></div>
+        {% endfor %}
+    </div>
+
+    {% set state_descs = {
+        'LISTEN':      'Services waiting for incoming connections on your machine.',
+        'ESTABLISHED': 'Live connections currently exchanging data.',
+        'CLOSE_WAIT':  'The remote side closed — your app hasn\'t released these yet.',
+        'TIME_WAIT':   'Connections that finished and are waiting before fully closing.',
+        'OTHER':       'Other connection states.',
+    } %}
+
+    {% for state, rows in grouped %}
+    <div class="state-group">
+        <div class="state-header" onclick="toggleGroup(this)">
+            <span class="state-label {{ state }}">{{ state }}</span>
+            <span class="state-desc">{{ state_descs.get(state, '') }}</span>
+            <span class="state-count">{{ rows | length }}</span>
+            <span class="state-chevron">▼</span>
+        </div>
+        <div class="state-body">
+            {% for item in rows %}
+            {% set conn = item.conn %}
+            {% set ex   = item.ex %}
+            <div class="conn-item">
+                <div class="conn-header" onclick="toggleConn(this)">
+                    <span class="conn-proto">{{ conn.protocol }}</span>
+                    <span class="conn-local">{{ conn.local_addr }}:{{ conn.local_port }}</span>
+                    <span class="conn-arrow">→</span>
+                    <span class="conn-remote">
+                        {% if conn.remote_addr == '*' %}any{% else %}{{ conn.remote_addr }}:{{ conn.remote_port }}{% endif %}
+                    </span>
+                    {% if ex.risk in ('high', 'medium') %}
+                    <span class="conn-risk {{ ex.risk }}">{{ ex.risk | upper }}</span>
+                    {% endif %}
+                    <span class="conn-chevron">▾</span>
+                </div>
+                <div class="conn-body">
+                    <p class="conn-what">{{ ex.what }}</p>
+                    {% if ex.flag %}
+                    <div class="conn-flag">⚠ {{ ex.flag }}</div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+
+    {% if not grouped %}
+    <p style="color:#444; font-size:0.9em;">No connections found. Try running <code>netstat -an</code> in your terminal.</p>
+    {% endif %}
+
+    <a href="/" class="back-btn">← Back to Scanner</a>
+
+    <script>
+        function toggleGroup(h) {
+            h.classList.toggle('open');
+            h.nextElementSibling.classList.toggle('open');
+        }
+        function toggleConn(h) {
+            h.classList.toggle('open');
+            h.nextElementSibling.classList.toggle('open');
+        }
+    </script>
+</body>
+</html>

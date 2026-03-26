@@ -9,334 +9,226 @@
             font-family: Arial, sans-serif;
             background-color: #0a0a0a;
             color: #e0e0e0;
-            max-width: 760px;
+            max-width: 720px;
             margin: 60px auto;
             padding: 20px;
         }
-        h1 { color: #00bfff; }
-        h2 { color: #00bfff; margin-top: 36px; }
-        p  { color: #aaaaaa; }
+        h1 { color: #00bfff; margin-bottom: 4px; }
+        .subtitle { color: #555; font-size: 0.85em; margin-bottom: 24px; }
 
-        .iface-block {
-            background: #111;
-            border: 1px solid #2a2a2a;
-            border-radius: 10px;
-            padding: 20px 24px;
-            margin: 20px 0;
-        }
-        .iface-title {
-            font-size: 1.15em;
-            font-weight: bold;
-            color: #00bfff;
-            margin-bottom: 4px;
-        }
-        .iface-subtitle {
+        /* ── nav ── */
+        .p5nav { display: flex; gap: 8px; margin-bottom: 28px; flex-wrap: wrap; }
+        .p5nav a {
+            padding: 7px 14px;
+            border-radius: 6px;
             font-size: 0.8em;
+            font-weight: bold;
+            text-decoration: none;
+            border: 1px solid #222;
+            background: #111;
             color: #555;
-            margin-bottom: 16px;
+            transition: all 0.15s;
         }
+        .p5nav a:hover { border-color: #00bfff; color: #00bfff; }
+        .p5nav a.active { background: #0d1f2d; border-color: #00bfff; color: #00bfff; }
 
+        /* ── interface accordion ── */
+        .iface-item { border: 1px solid #1e1e1e; border-radius: 8px; margin: 8px 0; overflow: hidden; }
+        .iface-header {
+            display: flex; align-items: center; gap: 12px;
+            padding: 13px 16px; cursor: pointer; user-select: none;
+            background: #111; transition: background 0.15s;
+        }
+        .iface-header:hover { background: #161616; }
+        .iface-header.open  { background: #0d1a26; border-bottom: 1px solid #1a2e3a; }
+        .iface-name  { font-weight: bold; font-size: 0.93em; color: #00bfff; min-width: 80px; }
+        .iface-desc  { color: #555; font-size: 0.8em; flex: 1; }
+        .iface-tag   {
+            font-size: 0.72em; padding: 2px 8px; border-radius: 10px;
+            border: 1px solid #2a2a2a; color: #555; white-space: nowrap;
+        }
+        .iface-tag.has-ip  { border-color: #1a3a1a; color: #44cc77; }
+        .iface-tag.grouped { border-color: #1a1a2a; color: #6688aa; }
+        .chevron { color: #333; font-size: 0.75em; transition: transform 0.2s; }
+        .iface-header.open .chevron { transform: rotate(180deg); color: #00bfff; }
+
+        .iface-body { display: none; padding: 0 16px 12px; background: #0c0c0c; }
+        .iface-body.open { display: block; }
+
+        /* ── fields ── */
         .field-row {
-            display: flex;
-            gap: 16px;
-            border-bottom: 1px solid #1e1e1e;
-            padding: 14px 0;
-            align-items: flex-start;
+            display: grid; grid-template-columns: 110px 1fr;
+            gap: 10px; padding: 10px 0; border-bottom: 1px solid #161616; align-items: start;
         }
         .field-row:last-child { border-bottom: none; }
+        .field-label { font-size: 0.7em; text-transform: uppercase; letter-spacing: 0.07em; color: #3a3a3a; padding-top: 3px; }
+        .field-value { font-family: monospace; font-size: 0.9em; color: #7fd8ff; word-break: break-all; }
+        .field-value.none { color: #2a2a2a; font-family: Arial, sans-serif; font-style: italic; font-size: 0.82em; }
+        .dns-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+        .dns-chip {
+            font-family: monospace; font-size: 0.82em; color: #7fd8ff;
+            background: #0d1a26; border: 1px solid #1e3a4f; border-radius: 4px; padding: 1px 7px;
+        }
+        .why-toggle { display: inline-block; margin-top: 4px; font-size: 0.72em; color: #333; cursor: pointer; user-select: none; }
+        .why-toggle:hover { color: #00bfff; }
+        .why-panel {
+            display: none; margin-top: 7px; padding: 9px 11px;
+            background: #0f0f0f; border-left: 2px solid #1e3a4f; border-radius: 0 4px 4px 0;
+        }
+        .why-panel.open { display: block; }
+        .why-what { font-size: 0.8em; color: #aaaaaa; line-height: 1.55; margin: 0 0 5px; }
+        .why-section { font-size: 0.68em; text-transform: uppercase; letter-spacing: 0.06em; color: #888888; margin: 7px 0 2px; }
+        .why-body    { font-size: 0.8em; color: #aaaaaa; line-height: 1.55; margin: 0; }
+        .why-bad     { color: #9a4a22; }
 
-        .field-label {
-            min-width: 110px;
-            font-size: 0.75em;
-            text-transform: uppercase;
-            letter-spacing: 0.07em;
-            color: #555;
-            padding-top: 3px;
-            flex-shrink: 0;
+        /* ── grouped item ── */
+        .group-members {
+            padding: 8px 0;
+            display: flex; flex-wrap: wrap; gap: 6px;
         }
-        .field-value {
-            font-family: monospace;
-            font-size: 0.95em;
-            color: #7fd8ff;
-            min-width: 140px;
-            flex-shrink: 0;
-            word-break: break-all;
-        }
-        .field-value.none {
-            color: #444;
-            font-style: italic;
-            font-family: Arial, sans-serif;
-            font-size: 0.85em;
-        }
-        .field-explain {
-            flex: 1;
-        }
-        .explain-what {
-            font-size: 0.88em;
-            color: #c0c0c0;
-            line-height: 1.5;
-            margin: 0 0 6px 0;
-        }
-        .explain-toggle {
-            font-size: 0.75em;
-            color: #00bfff;
-            cursor: pointer;
-            background: none;
-            border: none;
-            padding: 0;
-            text-decoration: underline;
-        }
-        .explain-detail {
-            display: none;
-            margin-top: 8px;
-        }
-        .explain-detail.open { display: block; }
-        .detail-row {
-            margin: 5px 0;
-            font-size: 0.82em;
-            color: #888;
-            line-height: 1.5;
-        }
-        .detail-label {
-            color: #555;
-            text-transform: uppercase;
-            font-size: 0.75em;
-            letter-spacing: 0.05em;
-            display: block;
-            margin-bottom: 2px;
-        }
-        .bad-value-text {
-            color: #ff8844;
+        .member-chip {
+            font-size: 0.78em; font-family: monospace; color: #5577aa;
+            background: #0d0d14; border: 1px solid #1a1a2a; border-radius: 4px; padding: 2px 8px;
         }
 
-        .no-ifaces {
-            background: #1a1a1a;
-            border-left: 3px solid #ff4444;
-            padding: 14px 18px;
-            color: #aaa;
-            font-size: 0.9em;
-        }
-
-        .back-btn {
-            display: inline-block;
-            margin-top: 30px;
-            padding: 10px 20px;
-            background: #00bfff;
-            color: #000;
-            font-weight: bold;
-            border-radius: 5px;
-            text-decoration: none;
-        }
-        .back-btn.secondary {
-            background: #1a1a1a;
-            color: #00bfff;
-            border: 1px solid #00bfff;
-            margin-left: 10px;
-        }
-
+        /* ── misc ── */
         .privacy-note {
-            background: #0d1a0d;
-            border-left: 3px solid #00cc44;
-            padding: 10px 15px;
-            color: #888;
-            font-size: 0.82em;
-            margin: 20px 0;
+            background: #0d1a0d; border-left: 3px solid #1a4a1a;
+            padding: 8px 13px; color: #3a5a3a; font-size: 0.78em; margin-bottom: 20px;
         }
-
-        .dns-list {
-            margin: 0;
-            padding: 0;
-            list-style: none;
-        }
-        .dns-list li {
-            font-family: monospace;
-            font-size: 0.92em;
-            color: #7fd8ff;
-            display: inline;
-        }
-        .dns-list li + li::before {
-            content: ", ";
-            color: #555;
+        .back-btn {
+            display: inline-block; margin-top: 28px; padding: 10px 20px;
+            background: #00bfff; color: #000; font-weight: bold;
+            border-radius: 5px; text-decoration: none;
         }
     </style>
 </head>
 <body>
     <h1>🌐 Network Intelligence</h1>
-    <p>A plain-English breakdown of every network interface on this machine — what each value means, why it matters, and what a bad value looks like.</p>
+    <p class="subtitle">Your interfaces, explained plainly. Click any row to inspect it.</p>
 
-    <div class="privacy-note">
-        🔒 This page reads your local network configuration only. Nothing is sent anywhere.
+    <nav class="p5nav">
+        <a href="/network-intel" class="active">🌐 Interfaces</a>
+        <a href="/arp-table">📡 ARP Table</a>
+        <a href="/netstat">🔌 Connections</a>
+        <a href="/traceroute">🗺️ Traceroute</a>
+    </nav>
+
+    <div class="privacy-note">🔒 Reads local configuration only — nothing leaves your machine.</div>
+
+    {% if not grouped %}
+    <p style="color:#555;">No interfaces found. Try running <code>ifconfig</code> in your terminal.</p>
+    {% endif %}
+
+    {% for item in grouped %}
+    {% if item.grouped %}
+
+    {# ── grouped row ── #}
+    <div class="iface-item">
+        <div class="iface-header" onclick="toggleIface(this)">
+            <span class="iface-name">{{ item.prefix }}</span>
+            <span class="iface-desc">{{ item.label }}</span>
+            <span class="iface-tag grouped">{{ item.count }} interfaces</span>
+            <span class="chevron">▼</span>
+        </div>
+        <div class="iface-body">
+            <div class="group-members">
+                {% for member in item.members %}
+                <span class="member-chip">
+                    {{ member.name }}{% if member.iface.ipv4 %} · {{ member.iface.ipv4 }}{% endif %}
+                </span>
+                {% endfor %}
+            </div>
+            <p style="font-size:0.78em; color:#333; margin: 4px 0 8px;">
+                These interfaces are created automatically by your system or VPN software.
+                They're shown grouped because they're all the same type and typically don't need individual inspection.
+            </p>
+        </div>
     </div>
 
-    {% if not interfaces %}
-    <div class="no-ifaces">
-        Could not read network interface data. Make sure <code>ifconfig</code> (Mac/Linux)
-        or <code>ipconfig</code> (Windows) is available and try again.
-    </div>
     {% else %}
 
-    {% for name, iface in interfaces.items() %}
+    {# ── individual interface ── #}
+    {% set name = item.name %}
+    {% set iface = item.iface %}
     {% set ex = explanations.get(name, {}) %}
-    <div class="iface-block">
-        <div class="iface-title">{{ name }}</div>
-        <div class="iface-subtitle">{{ ex.get('name', {}).get('what', '') }}</div>
+    <div class="iface-item">
+        <div class="iface-header" onclick="toggleIface(this)">
+            <span class="iface-name">{{ name }}</span>
+            <span class="iface-desc">{{ ex.get('name', {}).get('what', '') | truncate(70, True, '…') }}</span>
+            <span class="iface-tag {% if iface.ipv4 %}has-ip{% endif %}">
+                {{ iface.ipv4 or "no IP" }}
+            </span>
+            <span class="chevron">▼</span>
+        </div>
+        <div class="iface-body">
 
-        {# MAC #}
-        <div class="field-row">
-            <div class="field-label">MAC Address</div>
-            <div class="field-value {% if not iface.mac_address %}none{% endif %}">
-                {{ iface.mac_address or "—" }}
-            </div>
-            <div class="field-explain">
-                {% set f = ex.get('mac_address', {}) %}
-                <p class="explain-what">{{ f.get('what', '') }}</p>
-                <button class="explain-toggle" onclick="toggleDetail(this)">Why it matters ▾</button>
-                <div class="explain-detail">
-                    <div class="detail-row">
-                        <span class="detail-label">Why it matters</span>
-                        {{ f.get('why', '') }}
+            {% for field, label in [
+                ('mac_address', 'MAC Address'),
+                ('ipv4',        'IPv4 Address'),
+                ('ipv6',        'IPv6 Address'),
+                ('subnet_mask', 'Subnet Mask'),
+                ('gateway',     'Gateway'),
+            ] %}
+            {% set f = ex.get(field, {}) %}
+            <div class="field-row">
+                <div class="field-label">{{ label }}</div>
+                <div>
+                    <div class="field-value {% if not iface[field] %}none{% endif %}">
+                        {{ iface[field] or "—" }}
                     </div>
-                    <div class="detail-row">
-                        <span class="detail-label">What a bad value looks like</span>
-                        <span class="bad-value-text">{{ f.get('bad_value', '') }}</span>
+                    <span class="why-toggle" onclick="toggleWhy(this)">▸ Why it matters</span>
+                    <div class="why-panel">
+                        <p class="why-what">{{ f.get('what', '') }}</p>
+                        <div class="why-section">Why it matters</div>
+                        <p class="why-body">{{ f.get('why', '') }}</p>
+                        <div class="why-section">Bad value</div>
+                        <p class="why-body why-bad">{{ f.get('bad_value', '') }}</p>
                     </div>
                 </div>
             </div>
-        </div>
+            {% endfor %}
 
-        {# IPv4 #}
-        <div class="field-row">
-            <div class="field-label">IPv4 Address</div>
-            <div class="field-value {% if not iface.ipv4 %}none{% endif %}">
-                {{ iface.ipv4 or "—" }}
-            </div>
-            <div class="field-explain">
-                {% set f = ex.get('ipv4', {}) %}
-                <p class="explain-what">{{ f.get('what', '') }}</p>
-                <button class="explain-toggle" onclick="toggleDetail(this)">Why it matters ▾</button>
-                <div class="explain-detail">
-                    <div class="detail-row">
-                        <span class="detail-label">Why it matters</span>
-                        {{ f.get('why', '') }}
+            {# DNS separately because it's a list #}
+            {% set f = ex.get('dns_servers', {}) %}
+            <div class="field-row">
+                <div class="field-label">DNS Servers</div>
+                <div>
+                    {% if iface.dns_servers %}
+                    <div class="dns-chips">
+                        {% for s in iface.dns_servers %}
+                        <span class="dns-chip">{{ s }}</span>
+                        {% endfor %}
                     </div>
-                    <div class="detail-row">
-                        <span class="detail-label">What a bad value looks like</span>
-                        <span class="bad-value-text">{{ f.get('bad_value', '') }}</span>
+                    {% else %}
+                    <div class="field-value none">—</div>
+                    {% endif %}
+                    <span class="why-toggle" onclick="toggleWhy(this)">▸ Why it matters</span>
+                    <div class="why-panel">
+                        <p class="why-what">{{ f.get('what', '') }}</p>
+                        <div class="why-section">Why it matters</div>
+                        <p class="why-body">{{ f.get('why', '') }}</p>
+                        <div class="why-section">Bad value</div>
+                        <p class="why-body why-bad">{{ f.get('bad_value', '') }}</p>
                     </div>
                 </div>
             </div>
-        </div>
 
-        {# IPv6 #}
-        <div class="field-row">
-            <div class="field-label">IPv6 Address</div>
-            <div class="field-value {% if not iface.ipv6 %}none{% endif %}">
-                {{ iface.ipv6 or "—" }}
-            </div>
-            <div class="field-explain">
-                {% set f = ex.get('ipv6', {}) %}
-                <p class="explain-what">{{ f.get('what', '') }}</p>
-                <button class="explain-toggle" onclick="toggleDetail(this)">Why it matters ▾</button>
-                <div class="explain-detail">
-                    <div class="detail-row">
-                        <span class="detail-label">Why it matters</span>
-                        {{ f.get('why', '') }}
-                    </div>
-                    <div class="detail-row">
-                        <span class="detail-label">What a bad value looks like</span>
-                        <span class="bad-value-text">{{ f.get('bad_value', '') }}</span>
-                    </div>
-                </div>
-            </div>
         </div>
-
-        {# Subnet Mask #}
-        <div class="field-row">
-            <div class="field-label">Subnet Mask</div>
-            <div class="field-value {% if not iface.subnet_mask %}none{% endif %}">
-                {{ iface.subnet_mask or "—" }}
-            </div>
-            <div class="field-explain">
-                {% set f = ex.get('subnet_mask', {}) %}
-                <p class="explain-what">{{ f.get('what', '') }}</p>
-                <button class="explain-toggle" onclick="toggleDetail(this)">Why it matters ▾</button>
-                <div class="explain-detail">
-                    <div class="detail-row">
-                        <span class="detail-label">Why it matters</span>
-                        {{ f.get('why', '') }}
-                    </div>
-                    <div class="detail-row">
-                        <span class="detail-label">What a bad value looks like</span>
-                        <span class="bad-value-text">{{ f.get('bad_value', '') }}</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        {# Gateway #}
-        <div class="field-row">
-            <div class="field-label">Gateway</div>
-            <div class="field-value {% if not iface.gateway %}none{% endif %}">
-                {{ iface.gateway or "—" }}
-            </div>
-            <div class="field-explain">
-                {% set f = ex.get('gateway', {}) %}
-                <p class="explain-what">{{ f.get('what', '') }}</p>
-                <button class="explain-toggle" onclick="toggleDetail(this)">Why it matters ▾</button>
-                <div class="explain-detail">
-                    <div class="detail-row">
-                        <span class="detail-label">Why it matters</span>
-                        {{ f.get('why', '') }}
-                    </div>
-                    <div class="detail-row">
-                        <span class="detail-label">What a bad value looks like</span>
-                        <span class="bad-value-text">{{ f.get('bad_value', '') }}</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        {# DNS #}
-        <div class="field-row">
-            <div class="field-label">DNS Servers</div>
-            <div class="field-value {% if not iface.dns_servers %}none{% endif %}">
-                {% if iface.dns_servers %}
-                <ul class="dns-list">
-                    {% for s in iface.dns_servers %}<li>{{ s }}</li>{% endfor %}
-                </ul>
-                {% else %}
-                —
-                {% endif %}
-            </div>
-            <div class="field-explain">
-                {% set f = ex.get('dns_servers', {}) %}
-                <p class="explain-what">{{ f.get('what', '') }}</p>
-                <button class="explain-toggle" onclick="toggleDetail(this)">Why it matters ▾</button>
-                <div class="explain-detail">
-                    <div class="detail-row">
-                        <span class="detail-label">Why it matters</span>
-                        {{ f.get('why', '') }}
-                    </div>
-                    <div class="detail-row">
-                        <span class="detail-label">What a bad value looks like</span>
-                        <span class="bad-value-text">{{ f.get('bad_value', '') }}</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
     </div>
-    {% endfor %}
-
     {% endif %}
+    {% endfor %}
 
     <a href="/" class="back-btn">← Back to Scanner</a>
 
     <script>
-        function toggleDetail(btn) {
-            const detail = btn.nextElementSibling;
-            const open = detail.classList.toggle('open');
-            btn.textContent = open ? 'Hide details ▴' : 'Why it matters ▾';
+        function toggleIface(h) {
+            h.classList.toggle('open');
+            h.nextElementSibling.classList.toggle('open');
+        }
+        function toggleWhy(t) {
+            const open = t.nextElementSibling.classList.toggle('open');
+            t.textContent = open ? '▾ Hide' : '▸ Why it matters';
         }
     </script>
 </body>

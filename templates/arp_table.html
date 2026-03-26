@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recon AI — ARP Table</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #0a0a0a;
+            color: #e0e0e0;
+            max-width: 720px;
+            margin: 60px auto;
+            padding: 20px;
+        }
+        h1 { color: #00bfff; margin-bottom: 4px; }
+        .subtitle { color: #555; font-size: 0.85em; margin-bottom: 24px; }
+
+        .p5nav { display: flex; gap: 8px; margin-bottom: 28px; flex-wrap: wrap; }
+        .p5nav a {
+            padding: 7px 14px; border-radius: 6px; font-size: 0.8em; font-weight: bold;
+            text-decoration: none; border: 1px solid #222; background: #111; color: #555;
+            transition: all 0.15s;
+        }
+        .p5nav a:hover { border-color: #00bfff; color: #00bfff; }
+        .p5nav a.active { background: #0d1f2d; border-color: #00bfff; color: #00bfff; }
+
+        .summary-bar {
+            display: flex; gap: 16px; margin-bottom: 20px; flex-wrap: wrap;
+        }
+        .summary-chip {
+            padding: 6px 14px; border-radius: 6px; font-size: 0.8em; font-weight: bold;
+            background: #111; border: 1px solid #222; color: #888;
+        }
+        .summary-chip span { color: #00bfff; }
+
+        /* entry accordion */
+        .entry-item { border: 1px solid #1a1a1a; border-radius: 8px; margin: 7px 0; overflow: hidden; }
+        .entry-header {
+            display: flex; align-items: center; gap: 12px;
+            padding: 12px 16px; cursor: pointer; user-select: none;
+            background: #111; transition: background 0.15s;
+        }
+        .entry-header:hover { background: #161616; }
+        .entry-header.open  { background: #0d1a26; border-bottom: 1px solid #1a2e3a; }
+        .entry-header.incomplete { border-left: 3px solid #444; }
+        .entry-header.gateway   { border-left: 3px solid #00bfff; }
+
+        .entry-ip  { font-family: monospace; font-size: 0.9em; color: #7fd8ff; min-width: 120px; }
+        .entry-mac { font-family: monospace; font-size: 0.78em; color: #555; flex: 1; }
+        .entry-iface { font-size: 0.72em; color: #444; min-width: 40px; }
+        .entry-type {
+            font-size: 0.7em; font-weight: bold; padding: 2px 8px; border-radius: 10px;
+            border: 1px solid #333; color: #666;
+        }
+        .entry-type.incomplete { border-color: #3a3a3a; color: #555; }
+        .entry-type.dynamic    { border-color: #1a3a1a; color: #44aa66; }
+        .entry-type.static     { border-color: #1a2a3a; color: #4488aa; }
+
+        .chevron { color: #333; font-size: 0.75em; transition: transform 0.2s; }
+        .entry-header.open .chevron { transform: rotate(180deg); color: #00bfff; }
+
+        .entry-body { display: none; padding: 12px 16px; background: #0c0c0c; }
+        .entry-body.open { display: block; }
+
+        .detail-row { margin: 6px 0; font-size: 0.84em; }
+        .detail-label { font-size: 0.7em; text-transform: uppercase; letter-spacing: 0.06em; color: #888888; display: block; margin-bottom: 2px; }
+        .detail-text  { color: #aaaaaa; line-height: 1.55; }
+        .flag-box {
+            margin-top: 10px; padding: 8px 11px;
+            background: #1a1400; border-left: 2px solid #665500;
+            font-size: 0.8em; color: #887744; line-height: 1.5;
+        }
+
+        .no-entries { color: #444; font-size: 0.9em; padding: 20px 0; }
+        .privacy-note {
+            background: #0d1a0d; border-left: 3px solid #1a4a1a;
+            padding: 8px 13px; color: #3a5a3a; font-size: 0.78em; margin-bottom: 20px;
+        }
+        .back-btn {
+            display: inline-block; margin-top: 28px; padding: 10px 20px;
+            background: #00bfff; color: #000; font-weight: bold;
+            border-radius: 5px; text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>📡 ARP Table</h1>
+    <p class="subtitle">Every device your machine has seen on the local network, with MAC addresses and plain-English context.</p>
+
+    <nav class="p5nav">
+        <a href="/network-intel">🌐 Interfaces</a>
+        <a href="/arp-table" class="active">📡 ARP Table</a>
+        <a href="/netstat">🔌 Connections</a>
+        <a href="/traceroute">🗺️ Traceroute</a>
+    </nav>
+
+    <div class="privacy-note">🔒 Reads your local ARP cache — no packets sent, nothing logged anywhere.</div>
+
+    {% if items %}
+    <div class="summary-bar">
+        <div class="summary-chip"><span>{{ total }}</span> entries</div>
+        {% if incomplete %}
+        <div class="summary-chip"><span>{{ incomplete }}</span> incomplete</div>
+        {% endif %}
+        {% if gateway %}
+        <div class="summary-chip">Gateway: <span>{{ gateway }}</span></div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% if not items %}
+    <p class="no-entries">No ARP entries found. This is unusual — try running <code>arp -a</code> in your terminal.</p>
+    {% else %}
+
+    {% for entry, ex in items %}
+    <div class="entry-item">
+        <div class="entry-header {% if entry.type == 'incomplete' %}incomplete{% elif entry.ip == gateway %}gateway{% endif %}"
+             onclick="toggleEntry(this)">
+            <span class="entry-ip">{{ entry.ip }}</span>
+            <span class="entry-mac">{{ entry.mac or "(incomplete)" }}</span>
+            <span class="entry-iface">{{ entry.interface or "" }}</span>
+            <span class="entry-type {{ entry.type }}">{{ entry.type }}</span>
+            <span class="chevron">▼</span>
+        </div>
+        <div class="entry-body">
+            <div class="detail-row">
+                <span class="detail-label">What this device likely is</span>
+                <span class="detail-text">{{ ex.device_guess }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">MAC address</span>
+                <span class="detail-text">{{ ex.mac_note }}</span>
+            </div>
+            {% if ex.flag %}
+            <div class="flag-box">⚠ {{ ex.flag }}</div>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+
+    {% endif %}
+
+    <a href="/" class="back-btn">← Back to Scanner</a>
+
+    <script>
+        function toggleEntry(h) {
+            h.classList.toggle('open');
+            h.nextElementSibling.classList.toggle('open');
+        }
+    </script>
+</body>
+</html>

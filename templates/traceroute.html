@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recon AI — Traceroute</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #0a0a0a;
+            color: #e0e0e0;
+            max-width: 720px;
+            margin: 60px auto;
+            padding: 20px;
+        }
+        h1 { color: #00bfff; margin-bottom: 4px; }
+        .subtitle { color: #555; font-size: 0.85em; margin-bottom: 24px; }
+
+        .p5nav { display: flex; gap: 8px; margin-bottom: 28px; flex-wrap: wrap; }
+        .p5nav a {
+            padding: 7px 14px; border-radius: 6px; font-size: 0.8em; font-weight: bold;
+            text-decoration: none; border: 1px solid #222; background: #111; color: #555;
+            transition: all 0.15s;
+        }
+        .p5nav a:hover { border-color: #00bfff; color: #00bfff; }
+        .p5nav a.active { background: #0d1f2d; border-color: #00bfff; color: #00bfff; }
+
+        /* ── target bar ── */
+        .target-bar {
+            display: flex; align-items: center; gap: 10px;
+            padding: 10px 14px; background: #111; border: 1px solid #1e1e1e;
+            border-radius: 7px; margin-bottom: 20px;
+        }
+        .target-label { font-size: 0.75em; color: #444; text-transform: uppercase; letter-spacing: 0.06em; }
+        .target-host  { font-family: monospace; font-size: 0.9em; color: #7fd8ff; flex: 1; }
+        .retrace-form input[type="text"] {
+            background: #0a0a0a; border: 1px solid #2a2a2a; color: #e0e0e0;
+            padding: 5px 10px; border-radius: 4px; font-size: 0.82em; width: 140px;
+        }
+        .retrace-form button {
+            padding: 5px 12px; background: #1a2a3a; border: 1px solid #2a4a6a;
+            color: #00bfff; border-radius: 4px; font-size: 0.8em; cursor: pointer;
+            width: auto; margin-top: 0;
+        }
+        .retrace-form button:hover { background: #1e3a5a; }
+
+        /* ── hop list ── */
+        .hop-list { position: relative; }
+        .hop-item {
+            display: flex; gap: 12px; align-items: flex-start;
+            padding: 12px 0; border-bottom: 1px solid #111;
+        }
+        .hop-item:last-child { border-bottom: none; }
+
+        .hop-num {
+            width: 28px; height: 28px; border-radius: 50%;
+            background: #111; border: 1px solid #1e1e1e;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.72em; color: #444; flex-shrink: 0; margin-top: 2px;
+        }
+        .hop-num.first   { border-color: #1a3a4a; color: #00bfff; }
+        .hop-num.timeout { background: #0e0e0e; color: #2a2a2a; border-style: dashed; }
+        .hop-num.flagged { border-color: #4a3300; color: #cc9933; }
+
+        .hop-main { flex: 1; }
+        .hop-top  { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .hop-ip   { font-family: monospace; font-size: 0.9em; color: #7fd8ff; }
+        .hop-ip.timeout { color: #333; font-style: italic; }
+        .hop-host { font-size: 0.75em; color: #446688; }
+        .hop-lat  {
+            font-family: monospace; font-size: 0.75em; padding: 2px 7px;
+            border-radius: 4px; border: 1px solid #1e1e1e; color: #555; margin-left: auto;
+        }
+        .hop-lat.fast   { border-color: #1a3a1a; color: #44aa66; }
+        .hop-lat.slow   { border-color: #3a2a00; color: #aa8833; }
+        .hop-lat.very-slow { border-color: #3a1a00; color: #cc6633; }
+
+        .hop-what {
+            font-size: 0.8em; color: #aaaaaa; margin: 5px 0 0; line-height: 1.5;
+        }
+        .hop-note {
+            font-size: 0.78em; color: #888888; margin: 4px 0 0; line-height: 1.5;
+        }
+        .hop-flag {
+            margin-top: 7px; padding: 6px 10px;
+            background: #141000; border-left: 2px solid #554400;
+            font-size: 0.78em; color: #886633; line-height: 1.5;
+        }
+
+        /* latency bar */
+        .lat-bar-wrap { margin-top: 5px; height: 3px; background: #111; border-radius: 2px; max-width: 160px; }
+        .lat-bar      { height: 3px; border-radius: 2px; background: #44aa66; transition: width 0.3s; }
+        .lat-bar.slow      { background: #aa8833; }
+        .lat-bar.very-slow { background: #cc6633; }
+
+        /* error box */
+        .error-box {
+            padding: 14px 16px; background: #1a0a0a; border-left: 3px solid #993333;
+            color: #cc5555; font-size: 0.88em; margin: 20px 0;
+        }
+
+        .privacy-note {
+            background: #0d1a0d; border-left: 3px solid #1a4a1a;
+            padding: 8px 13px; color: #3a5a3a; font-size: 0.78em; margin-bottom: 20px;
+        }
+        .back-btn {
+            display: inline-block; margin-top: 28px; padding: 10px 20px;
+            background: #00bfff; color: #000; font-weight: bold;
+            border-radius: 5px; text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>🗺️ Traceroute</h1>
+    <p class="subtitle">Every router your traffic passes through on the way to the internet, explained.</p>
+
+    <nav class="p5nav">
+        <a href="/network-intel">🌐 Interfaces</a>
+        <a href="/arp-table">📡 ARP Table</a>
+        <a href="/netstat">🔌 Connections</a>
+        <a href="/traceroute" class="active">🗺️ Traceroute</a>
+    </nav>
+
+    <div class="privacy-note">🔒 Sends standard traceroute probes to the target — no personal data transmitted.</div>
+
+    <div class="target-bar">
+        <span class="target-label">Target</span>
+        <span class="target-host">{{ host }}</span>
+        <form class="retrace-form" action="/traceroute" method="GET" style="display:flex; gap:6px; align-items:center;">
+            <input type="text" name="host" placeholder="8.8.8.8 or hostname" value="{{ host }}">
+            <button type="submit">Trace →</button>
+        </form>
+    </div>
+
+    {% if error %}
+    <div class="error-box">⚠ {{ error }}</div>
+    {% endif %}
+
+    {% if not hops and not error %}
+    <p style="color:#444; font-size:0.88em;">No hops returned. The target may be unreachable, or traceroute may not be installed.</p>
+    {% endif %}
+
+    <div class="hop-list">
+    {% for hop, ex in items %}
+    {% set lats = hop.latencies %}
+    {% set avg_ms = (lats | sum / lats | length) | round(1) if lats else None %}
+
+    {# Classify latency #}
+    {% if avg_ms is none or hop.timeout %}
+        {% set lat_class = "" %}
+    {% elif avg_ms < 30 %}
+        {% set lat_class = "fast" %}
+    {% elif avg_ms < 100 %}
+        {% set lat_class = "slow" %}
+    {% else %}
+        {% set lat_class = "very-slow" %}
+    {% endif %}
+
+    {# Max latency for bar width (cap at 300ms) #}
+    {% set bar_pct = [((avg_ms or 0) / 300 * 100), 100] | min | int if avg_ms else 0 %}
+
+    <div class="hop-item">
+        <div class="hop-num {% if hop.hop == 1 %}first{% elif hop.timeout %}timeout{% elif ex.flag %}flagged{% endif %}">
+            {{ hop.hop }}
+        </div>
+        <div class="hop-main">
+            <div class="hop-top">
+                <span class="hop-ip {% if hop.timeout %}timeout{% endif %}">
+                    {{ hop.ip or "* * *" }}
+                </span>
+                {% if hop.hostname %}
+                <span class="hop-host">{{ hop.hostname }}</span>
+                {% endif %}
+                {% if avg_ms is not none %}
+                <span class="hop-lat {{ lat_class }}">{{ avg_ms }}ms</span>
+                {% endif %}
+            </div>
+
+            {% if avg_ms is not none %}
+            <div class="lat-bar-wrap">
+                <div class="lat-bar {{ lat_class }}" style="width:{{ bar_pct }}%"></div>
+            </div>
+            {% endif %}
+
+            <p class="hop-what">{{ ex.what }}</p>
+            {% if ex.note %}
+            <p class="hop-note">{{ ex.note }}</p>
+            {% endif %}
+            {% if ex.flag %}
+            <div class="hop-flag">⚠ {{ ex.flag }}</div>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+    </div>
+
+    <a href="/" class="back-btn">← Back to Scanner</a>
+</body>
+</html>
