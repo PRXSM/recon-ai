@@ -116,6 +116,21 @@
 
     <div class="privacy-note">🔒 Reads local configuration only — nothing leaves your machine.</div>
 
+<div class="verdict-card" style="
+    background:#0d1a0d; border:1px solid #1a4a1a;
+    border-radius:8px; padding:14px 18px;
+    margin-bottom:20px;">
+  <span style="font-size:1.1em;">🌐</span>
+  <span style="color:#44cc77; font-weight:bold;
+    margin-left:8px;">Your network interfaces
+    are shown below.</span>
+  <span style="color:#555; font-size:0.85em;
+    margin-left:6px;">These are the connections
+    your device uses to talk to the internet
+    and your local network. Click any row
+    to learn what it means.</span>
+</div>
+
     {% if not grouped %}
     <p style="color:#555;">No interfaces found. Try running <code>ifconfig</code> in your terminal.</p>
     {% endif %}
