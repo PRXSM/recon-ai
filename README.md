@@ -182,7 +182,7 @@ Deductions: -2 per open port, up to -20 per critical vulnerability, up to -10 pe
 | ✅ | 30+ threat patterns, cross-tool correlation, downloadable reports | Done |
 | ✅ | Phase 5 — Network Intelligence — interfaces, ARP, netstat, traceroute, accordion UI, CIDR validation, AI analysis | Complete |
 | 📋 | Phase 6 — Deploy Online — HTTPS, rate limiting, GDPR compliance | Planned |
-| 📋 | Phase 7 — Monetization — scheduled scans, multi-language | Planned |
+| 📋 | Phase 7 — Monetization — scheduled scans, premium features, multi-language | Planned |
 
 ---
 
