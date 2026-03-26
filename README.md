@@ -41,6 +41,8 @@ Every finding explained in plain English with step-by-step fix instructions
 Optional: send findings to Claude AI for a deeper breakdown
          ↓
 Download the full report as a .txt file
+         ↓
+Explore Network Intelligence — understand your interfaces, ARP table, active connections, and routes in plain English
 ```
 
 ---
@@ -130,9 +132,14 @@ recon-ai/
 ├── vulnerability_reporter.py  # Port → vulnerability database + cross-tool correlation
 ├── ai_assistant.py            # Claude API integration
 ├── plain_english.py           # Offline knowledge base for common port findings
+├── network_intel.py           # Network Intelligence engine
 ├── templates/
 │   ├── index.html             # Scan form
-│   └── results.html           # Results display
+│   ├── results.html           # Results display
+│   ├── network_intel.html     # Network Intelligence dashboard
+│   ├── arp_table.html         # ARP table explained
+│   ├── netstat.html           # Active connections explained
+│   └── traceroute.html        # Route tracing explained
 ├── .env.example               # API key template
 ├── requirements.txt
 └── README.md
@@ -173,9 +180,9 @@ Deductions: -2 per open port, up to -20 per critical vulnerability, up to -10 pe
 | ✅ | Unified engine — risk scoring, OS detection, IP redaction | Done |
 | ✅ | Flask web interface — browser UI, AI opt-in, offline mode | Done |
 | ✅ | 30+ threat patterns, cross-tool correlation, downloadable reports | Done |
-| 🔨 | Network intelligence — ARP, netstat, and more explained in plain English | In progress |
-| 📋 | UI redesign | Planned |
-| 📋 | More coming | — |
+| ✅ | Phase 5 — Network Intelligence — interfaces, ARP, netstat, traceroute, accordion UI, CIDR validation, AI analysis | Complete |
+| 📋 | Phase 6 — Deploy Online — HTTPS, rate limiting, GDPR compliance | Planned |
+| 📋 | Phase 7 — Monetization — scheduled scans, premium features, multi-language | Planned |
 
 ---
 
