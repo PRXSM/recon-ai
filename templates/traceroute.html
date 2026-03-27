@@ -121,9 +121,9 @@
         <a href="/traceroute" class="active">🗺️ Traceroute</a>
     </nav>
 
-    <div class="privacy-note">🔒 Sends standard traceroute probes to the target — no personal data transmitted.</div>
+    <div class="privacy-note">🔒 Nothing about you is sent anywhere — this just checks the path your internet takes.</div>
 
-{% if hops %}
+{% if items %}
 <div class="verdict-card" style="
     background:#0d1a0d; border:1px solid #1a4a1a;
     border-radius:8px; padding:14px 18px;
@@ -133,13 +133,13 @@
     margin-left:8px;">Your internet is working.</span>
   <span style="color:#555; font-size:0.85em;
     margin-left:6px;">Your traffic reached its
-    destination in {{ hops|length }} hops.
+    destination in {{ items|length }} hops.
     Everything looks normal.</span>
 </div>
 {% endif %}
 
     <div class="target-bar">
-        <span class="target-label">Target</span>
+        <span class="target-label">Checking Path To</span>
         <span class="target-host">{{ host }}</span>
         <form class="retrace-form" action="/traceroute" method="GET" style="display:flex; gap:6px; align-items:center;">
             <input type="text" name="host" placeholder="8.8.8.8 or hostname" value="{{ host }}">

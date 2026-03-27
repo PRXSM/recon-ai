@@ -796,27 +796,27 @@ def explain_hop(hop):
 
     if timeout:
         return {
-            'what': "This hop didn't respond to the probe.",
-            'note': "Timeouts (* * *) are common — many routers silently drop traceroute packets. It doesn't necessarily mean there's a problem.",
+            'what': "This stop didn't respond.",
+            'note': "That's totally normal — many routers stay quiet on purpose. Nothing to worry about.",
             'flag': None,
             'latency_str': None,
         }
 
     flag = None
     if n == 1:
-        what = f"Your router ({ip}) — the first stop for all your traffic."
+        what = f"This is your home router — the first step out of your house. ({ip})"
         if avg_ms and avg_ms > 15:
             flag = f"Your router is responding slowly ({avg_ms}ms). Normally under 5ms on wired, under 10ms on Wi-Fi."
     elif ip and (ip.startswith('10.') or ip.startswith('192.168.') or
                  re.match(r'^172\.(1[6-9]|2\d|3[01])\.', ip)):
-        what = f"{ip} — a private address, likely inside your ISP's infrastructure."
+        what = f"This is your internet provider's network — totally normal to see. ({ip})"
     elif avg_ms and avg_ms > 200:
-        what = f"{ip} — a distant server, possibly on another continent."
+        what = f"A faraway server, possibly on another continent. ({ip})"
         flag = f"High latency ({avg_ms}ms) — expected for intercontinental hops but can slow browsing."
     elif avg_ms and avg_ms > 80:
-        what = f"{ip} — probably a regional network or ISP backbone router."
+        what = f"Probably your ISP's regional network — normal to see this. ({ip})"
     elif ip:
-        what = f"{ip} — a router along the path to the internet."
+        what = f"A router along the path — traffic hops through these to reach its destination. ({ip})"
     else:
         what = "Unknown hop."
 
