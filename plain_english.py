@@ -23,6 +23,12 @@ PORT_EXPLANATIONS = {
             "Alternatively, use SCP or a modern tool like rsync over SSH.",
             "If FTP must stay, restrict access to specific IP addresses via your firewall.",
         ],
+        "verify": "Run a scan again — port 21 should be gone. That means the door is closed.",
+        "verify_deep": [
+            "Run 'nmap -p 21 localhost' — it should show 'closed' or 'filtered'.",
+            "Try 'ftp localhost' in terminal — it should refuse the connection.",
+            "Check running services with 'sudo lsof -i :21' — nothing should appear.",
+        ],
     },
     22: {
         "name": "SSH (Secure Shell)",
@@ -43,6 +49,12 @@ PORT_EXPLANATIONS = {
             "Use fail2ban or similar to automatically block IPs after repeated failed attempts.",
             "Restrict SSH access to specific IP addresses if possible.",
         ],
+        "verify": "Try logging in with a password instead of your key — it should be rejected. That means key-only auth is working.",
+        "verify_deep": [
+            "Run 'ssh -o PreferredAuthentications=password user@localhost' — should say permission denied.",
+            "Check sshd_config: 'grep Password /etc/ssh/sshd_config' — should show PasswordAuthentication no.",
+            "Run 'sudo lsof -i :22' to confirm only your SSH daemon is listening.",
+        ],
     },
     23: {
         "name": "Telnet",
@@ -62,6 +74,12 @@ PORT_EXPLANATIONS = {
             "If the device running Telnet cannot support SSH, it should be replaced or isolated from the network.",
             "Block port 23 at your firewall as an additional layer.",
         ],
+        "verify": "Run a scan again — port 23 should be completely gone.",
+        "verify_deep": [
+            "Run 'telnet localhost' — should immediately refuse the connection.",
+            "Check with 'sudo lsof -i :23' — nothing should appear.",
+            "Run 'nmap -p 23 localhost' — should show closed or filtered.",
+        ],
     },
     25: {
         "name": "SMTP (Simple Mail Transfer Protocol)",
@@ -80,6 +98,12 @@ PORT_EXPLANATIONS = {
             "Configure your mail server to only relay email for your own domain.",
             "Use a mail server test (e.g., MXToolbox) to verify you are not an open relay.",
             "If you don't run a mail server, block port 25 at your firewall.",
+        ],
+        "verify": "Go to mxtoolbox.com and run their open relay test on your IP — it should say not an open relay.",
+        "verify_deep": [
+            "Test with 'telnet yourip 25' from outside your network — should require authentication.",
+            "Send a test email through your server and check mail logs for any relay attempts.",
+            "Run 'nmap -p 25 yourip' from outside — if blocked, it shows filtered.",
         ],
     },
     53: {
@@ -101,6 +125,12 @@ PORT_EXPLANATIONS = {
             "Use a firewall rule to block DNS queries from outside your network.",
             "Consider using a managed DNS service instead of running your own resolver.",
         ],
+        "verify": "Run a scan again — if your DNS is locked down, outside devices can no longer use your server as a shortcut.",
+        "verify_deep": [
+            "From an external network run: 'dig @yourip google.com' — should return REFUSED for non-local queries.",
+            "Check your DNS server config for 'allow-recursion' — should only list your internal subnets.",
+            "Use dnscheck.tools to test your resolver from outside.",
+        ],
     },
     80: {
         "name": "HTTP (Web Server)",
@@ -119,6 +149,12 @@ PORT_EXPLANATIONS = {
             "Configure the server to automatically redirect all HTTP traffic to HTTPS.",
             "Add HTTP Strict Transport Security (HSTS) headers once HTTPS is working.",
             "If port 80 serves no purpose, disable it entirely.",
+        ],
+        "verify": "Type your website address starting with http:// — it should automatically switch to https://. That redirect means it worked.",
+        "verify_deep": [
+            "Run 'curl -I http://yourdomain.com' — look for '301 Moved Permanently' pointing to https.",
+            "Check your server config for the redirect rule.",
+            "Use ssllabs.com/ssltest to confirm HTTPS is properly configured.",
         ],
     },
     88: {
@@ -139,6 +175,12 @@ PORT_EXPLANATIONS = {
             "Restrict access to port 88 to only machines that need it (domain-joined computers).",
             "Enable audit logging for Kerberos authentication failures.",
         ],
+        "verify": "Run the scan again from a non-domain device — port 88 should not be reachable.",
+        "verify_deep": [
+            "Use 'nmap -p 88 yourdc' from a non-domain machine — should show filtered.",
+            "Check firewall rules to confirm port 88 is restricted to domain subnets only.",
+            "Review Windows Event Viewer for Kerberos authentication logs — look for unexpected failures.",
+        ],
     },
     110: {
         "name": "POP3 (Post Office Protocol)",
@@ -156,6 +198,12 @@ PORT_EXPLANATIONS = {
             "Better yet, use IMAP with TLS (port 993) — IMAP keeps emails on the server and syncs across devices.",
             "Update your email client to connect on the encrypted port.",
             "Disable port 110 on your mail server once all clients are migrated.",
+        ],
+        "verify": "Open your email app — if it connects and downloads email normally on the new port, the switch worked.",
+        "verify_deep": [
+            "Check your email client settings — incoming server should now be port 995 with SSL.",
+            "Run 'openssl s_client -connect mailserver:995' — should show a valid certificate.",
+            "Disable port 110 on the mail server and confirm no clients break.",
         ],
     },
     143: {
@@ -175,6 +223,12 @@ PORT_EXPLANATIONS = {
             "Disable port 143 on your mail server once all clients have been updated.",
             "Ensure your TLS certificate is valid and not self-signed for production use.",
         ],
+        "verify": "Open your email app — if it syncs normally with no errors, the encrypted connection is working.",
+        "verify_deep": [
+            "Check email client settings — should show port 993 with SSL/TLS.",
+            "Run 'openssl s_client -connect mailserver:993' to test the encrypted connection.",
+            "Check mail server logs for any remaining port 143 connection attempts.",
+        ],
     },
     443: {
         "name": "HTTPS (Secure Web Server)",
@@ -193,6 +247,12 @@ PORT_EXPLANATIONS = {
             "Use a tool like SSL Labs (ssllabs.com/ssltest) to check your TLS configuration.",
             "Disable TLS 1.0 and 1.1 — only allow TLS 1.2 and 1.3.",
             "Keep your web server software (nginx, Apache, etc.) up to date.",
+        ],
+        "verify": "Go to ssllabs.com/ssltest and enter your domain — aim for an A or A+ grade.",
+        "verify_deep": [
+            "Check certificate expiry: 'echo | openssl s_client -connect yourdomain:443 2>/dev/null | openssl x509 -noout -dates'",
+            "Verify TLS version: only 1.2 and 1.3 should be enabled.",
+            "Check HSTS header is present: 'curl -I https://yourdomain.com' and look for Strict-Transport-Security.",
         ],
     },
     445: {
@@ -214,6 +274,33 @@ PORT_EXPLANATIONS = {
             "If SMB is needed internally, restrict it to trusted IP ranges only.",
             "Apply all Windows security patches, especially MS17-010 (EternalBlue patch).",
             "Consider using a VPN for remote file access instead of exposing SMB.",
+        ],
+        "verify": "Run the scan again — port 445 should not show up from outside your home network. If it's gone, you're protected.",
+        "verify_deep": [
+            "From outside your network run 'nmap -p 445 yourpublicip' — should show filtered.",
+            "On Windows run: 'Get-SmbServerConfiguration | Select EnableSMB1Protocol' — should return False.",
+            "Check Windows Event Viewer for SMB connection attempts after making changes.",
+        ],
+    },
+    631: {
+        "name": "IPP (Internet Printing Protocol)",
+        "what_it_is": (
+            "This is your printer sharing service. Your Mac opens this automatically "
+            "when printer sharing or AirPrint is turned on."
+        ),
+        "why_its_risky": (
+            "On your home network this is low risk. On a public or work network an exposed printer port "
+            "can let strangers print to your printer or access your documents."
+        ),
+        "risk_level": "LOW",
+        "fix_steps": [
+            "Go to System Settings → General → Sharing and turn off Printer Sharing if you don't need it.",
+            "If you use AirPrint, keep it on but make sure your WiFi network has a strong password.",
+        ],
+        "verify": "Run the scan again — port 631 should be gone if you turned off printer sharing.",
+        "verify_deep": [
+            "Run 'sudo lsof -i :631' — nothing should appear if the service is off.",
+            "Go to System Settings → Sharing and confirm Printer Sharing is toggled off.",
         ],
     },
     3389: {
@@ -237,6 +324,12 @@ PORT_EXPLANATIONS = {
             "Patch Windows regularly — several critical RDP vulnerabilities have been discovered in recent years.",
             "Consider using a jump host or bastion server as an intermediary.",
         ],
+        "verify": "Try connecting via Remote Desktop from outside your VPN — it should fail to connect. Inside VPN it should still work fine.",
+        "verify_deep": [
+            "From outside VPN run 'nmap -p 3389 yourpublicip' — should show filtered.",
+            "Check your firewall logs for any RDP connection attempts — you'll often see automated bots trying constantly.",
+            "Enable RDP audit logging in Windows Event Viewer to monitor future attempts.",
+        ],
     },
     8080: {
         "name": "HTTP-Alt (Alternative Web Port)",
@@ -255,6 +348,12 @@ PORT_EXPLANATIONS = {
             "If it's a development server, ensure it's not accessible from outside your local network.",
             "If it's a production service, consider moving it to port 443 with HTTPS.",
             "Disable default credentials on any web admin interface accessible on this port.",
+        ],
+        "verify": "Try visiting http://yourip:8080 from your phone on mobile data — if it times out, the port is properly closed off.",
+        "verify_deep": [
+            "Run 'nmap -p 8080 yourpublicip' from outside — should show filtered or closed.",
+            "Check what process owns the port: 'sudo lsof -i :8080'.",
+            "If it's a dev server, confirm it's bound to 127.0.0.1 only, not 0.0.0.0.",
         ],
     },
 }
@@ -283,6 +382,11 @@ def explain_port(port: int) -> dict:
             f"'netstat -ano | findstr :{port}' (Windows).",
             "If you don't recognize the process, research it before assuming it's safe.",
             "If the port is not needed, disable the application or block it at your firewall.",
+        ],
+        "verify": "Run the scan again after closing the app — the port should disappear.",
+        "verify_deep": [
+            f"Run 'sudo lsof -i :{port}' to confirm nothing is listening.",
+            "If the port persists, check startup items for anything unfamiliar.",
         ],
     }
 

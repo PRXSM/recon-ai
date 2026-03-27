@@ -195,6 +195,21 @@
         .explain-card.border-medium   { border-left: 4px solid #ffaa00; }
         .explain-card.border-low      { border-left: 4px solid #00cc44; }
         .explain-card.border-unknown  { border-left: 4px solid #555; }
+        .verify-toggle {
+            display: inline-block; margin-top: 8px; font-size: 0.78em;
+            color: #444; cursor: pointer; user-select: none;
+        }
+        .verify-toggle:hover { color: #00bfff; }
+        .verify-deep-panel {
+            display: none; margin-top: 7px; padding: 9px 11px;
+            background: #0f0f0f; border-left: 2px solid #1e3a4f; border-radius: 0 4px 4px 0;
+        }
+        .verify-deep-panel.open { display: block; }
+        .verify-deep-steps {
+            margin: 4px 0 0 0; padding-left: 18px;
+            color: #888; font-size: 0.85em; line-height: 1.7;
+        }
+        .verify-deep-steps li { margin: 0; }
         .ai-nudge {
             margin-top: 20px;
             padding: 10px 15px;
@@ -300,6 +315,20 @@
             <li>{{ step }}</li>
             {% endfor %}
         </ol>
+        {% if ex.verify %}
+        <div class="explain-section">How to verify</div>
+        <p class="explain-text">{{ ex.verify }}</p>
+        {% if ex.verify_deep %}
+        <span class="verify-toggle" onclick="toggleVerifyDeep(this)">▸ Dig deeper</span>
+        <div class="verify-deep-panel">
+            <ol class="verify-deep-steps">
+                {% for step in ex.verify_deep %}
+                <li>{{ step }}</li>
+                {% endfor %}
+            </ol>
+        </div>
+        {% endif %}
+        {% endif %}
     </div>
     {% endfor %}
     <div class="ai-nudge">
@@ -322,5 +351,10 @@
     <a href="/" class="back-btn">← Scan Again</a>
     <a href="/network-intel" class="back-btn" style="background:#1a1a1a; color:#00bfff; border:1px solid #00bfff; margin-left:10px;">🌐 Network Intelligence</a>
 
+    <script>
+    function toggleVerifyDeep(t) {
+        t.nextElementSibling.classList.toggle('open');
+    }
+    </script>
 </body>
 </html>
