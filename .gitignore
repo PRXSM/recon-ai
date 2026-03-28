@@ -10,3 +10,9 @@ network-mapper/
 port-scanner/
 vulnerability-reporter/
 venv/
+
+# Internal docs — private, not tracked
+RECON_AI_Roadmap.md
+Recon_AI_Roadmap.docx
+PRD.md
+ARCHITECTURE.md
