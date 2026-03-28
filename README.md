@@ -181,8 +181,8 @@ Deductions: -2 per open port, up to -20 per critical vulnerability, up to -10 pe
 | ✅ | Flask web interface — browser UI, AI opt-in, offline mode | Done |
 | ✅ | 30+ threat patterns, cross-tool correlation, downloadable reports | Done |
 | ✅ | Phase 5 — Network Intelligence — interfaces, ARP, netstat, traceroute, accordion UI, CIDR validation, AI analysis | Complete |
-| 📋 | Phase 6 — Deploy Online — HTTPS, rate limiting, GDPR compliance | Planned |
-| 📋 | Phase 7 — Monetization — scheduled scans, premium features, multi-language | Planned |
+| ✅ | Phase 6 — The Guardian Update — scan memory, unknown device alerts, three AI mode selector (Offline/Standard/Private), local Ollama integration | Complete |
+| 🔨 | Phase 7 — Deep Scan Mode — full 65,535 port scanning with threading, Simple vs Deep scan profiles | Next |
 
 ---
 
