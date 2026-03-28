@@ -11,6 +11,8 @@ Recon AI is an AI-powered network security platform designed for everyone — no
 
 Most security tools are built for experts. Recon AI is built for everyone else — and for experts who want to work faster.
 
+The north star vision: Recon AI becomes the silent defender against his own kind — a tool that protects everyday people from real threats, including AI-powered attacks, explained entirely in plain English. Not just a scanner you run once. A guardian that watches, remembers, and protects quietly in the background.
+
 ### The North Star
 
 Every decision, every feature, every line of code is built with one person in mind:
@@ -45,6 +47,15 @@ Every decision, every feature, every line of code is built with one person in mi
 - Clear terms of service — only scan networks you own
 - CFAA compliant disclaimer built into the product
 - Transparent about what data is used and how
+
+### Privacy as Amanah (Trustworthiness)
+- User data is treated as a sacred trust
+- Nothing is sent anywhere without explicit user consent and a preview of exactly what will be shared
+- Three AI modes give users full control over their data at all times
+- Standard Mode: anonymized findings sent to Claude API, consent required
+- Private Mode: fully local AI, zero data leaves the machine, ever
+- Offline Mode: no AI, built-in knowledge base only, always free
+- The word 'target' is banned from all user-facing copy — this tool is FOR the user, never pointed AT others
 
 ---
 
@@ -116,57 +127,90 @@ For enterprise users (hospitals, banks, government): Recon AI can run in fully o
 | Phase | Description | Status |
 |---|---|---|
 | **Phase 1** | 5 Core Tools — Port Scanner, Network Mapper, Log Analyzer, Vulnerability Reporter, AI Assistant | ✅ COMPLETE |
-| **Phase 2** | Unified Engine — All 5 tools connected, 4 scan modes, risk score, OS detection, IP redaction | ✅ COMPLETE |
+| **Phase 2** | Unified Engine — All 5 tools connected, risk score, OS detection, IP redaction | ✅ COMPLETE |
 | **Phase 3** | Flask Web Interface — Browser UI, privacy messaging, legal checkbox, AI opt-in, offline mode | ✅ COMPLETE |
-| **Phase 4** | Make It Smarter — 30+ threat patterns, grouped findings, EXPLAIN/RISK/FIX/VERIFY, markdown rendering | ✅ COMPLETE |
-| **Phase 5** | Network Intelligence — ipconfig/ifconfig translator, ARP table, netstat, traceroute, accordion UI redesign, CIDR validation | ✅ COMPLETE |
-| **Phase 6** | Network Intelligence — ipconfig/ifconfig translator, ARP table, netstat, packet capture explained | 📋 PLANNED |
-| **Phase 7** | Deploy Online — Real server, HTTPS, rate limiting, terms of service, GDPR compliance | 📋 PLANNED |
-| **Phase 8** | Monetization — Local download, premium features, scheduled scans subscription | 📋 PLANNED |
+| **Phase 4** | Make It Smarter — 30+ threat patterns, cross-tool correlation, EXPLAIN/RISK/FIX/VERIFY, markdown rendering, downloadable reports | ✅ COMPLETE |
+| **Phase 5** | Network Intelligence — interfaces, ARP table, netstat, traceroute, accordion UI, CIDR validation, verdict banners, simplified AI prompt, offline VERIFY + Dig Deeper | ✅ COMPLETE |
+| **Phase 6** | The Guardian Update — scan memory, unknown device alerts, three AI mode selector (Standard/Private/Offline) | 🔨 NEXT |
+| **Phase 7** | Deep Scan Mode — full 65,535 port scanning with threading, Simple vs Deep scan profiles | 📋 PLANNED |
+| **Phase 8** | System Inspector — suspicious process detector, startup item analyzer, two scan profiles | 📋 PLANNED |
+| **Phase 9** | App Complete Milestone — full audit, security hardening, Jawad code review | 📋 PLANNED |
+| **Phase 10** | UI Redesign — Aroosha designs and executes full interface overhaul, single page dashboard, mobile responsive | 📋 PLANNED |
+| **Phase 11** | Deploy Online — HTTPS, rate limiting, GDPR compliance, weekly digest email, plain English threat feed | 📋 PLANNED |
+| **Phase 12** | Business Model — freemium launch, premium Private Mode (local Ollama AI), scheduled scans, organizational accounts, multi-language | 📋 PLANNED |
 
 ---
 
-## 7. Future Features Backlog
+## 7. The Guardian Features
+These are the features that transform Recon AI from a scanner into a guardian.
 
-### Phase 4 Remaining
-- Checkbox-based scan mode selector — user picks exactly which tools to run
-- `plain_english.py` — built-in offline knowledge base for common findings
-- Vulnerability reporter pulling from ALL 5 tools, not just port scanner
-- Markdown rendering for AI analysis output
+### Phase 6 — The Guardian Update
+- **Scan Memory** — local database stores every scan. Returning users see what changed since last time. New ports, fixed issues, new devices — all tracked.
+- **Unknown Device Alert** — when a new MAC address appears on the network that wasn't there before, Recon AI flags it immediately in plain English: "New device found — do you recognize it?"
+- **Three AI Mode Selector** — user chooses once at setup:
+  - Standard Mode: Claude API, consent preview shown before sending
+  - Private Mode: local Ollama model, zero data leaves the machine (premium)
+  - Offline Mode: built-in knowledge base, always free, zero API calls
 
-### Phase 5 — UI & Experience
+### Phase 7 — Deep Scan
+- Full 65,535 port scanning using threading
+- Simple profile: ports 1-1024, fast
+- Deep profile: all ports, thorough
+- Progress indicator during long scans
+
+### Phase 8 — System Inspector
+- Suspicious process detector
+- Startup item analyzer
+- Not a full antivirus — smart flagging only
+- Two scan profiles: Simple and Deep
+
+### Phase 9 — App Complete
+- Full security audit using hardening prompts
+- Jawad professional code review
+- Performance optimization
+- Bug fixes and edge case handling
+- Documentation complete
+
+### Phase 10 — UI Redesign (Aroosha)
 - Single page dashboard — everything visible at once
-- Real-time scan progress indicator
+- Real-time scan progress with loading states
+- Results appear section by section as scan completes
 - Mobile responsive design
-- Scan history — compare this week vs last week
-- Network health trend over time
-- Weekly email digest — green/yellow/red summary
+- Trust Score displayed prominently
+- Clean, friendly, non-scary visual design
 
-### Phase 6 — Network Intelligence
-- ipconfig/ifconfig translator — MAC, IPv4, IPv6, private IP, public IP, subnet, gateway, DNS all explained
-- ARP table — who's on your network, MAC to IP mapping explained
-- netstat — active connections, what's talking to what, explained simply
-- tracert/traceroute — path packets take, where delays happen
-- Packet capture — Wireshark-like feature, explained in plain English
+### Phase 11 — Deploy Online
+- reconai.io hosted version
+- HTTPS enforced
+- Rate limiting on all endpoints
+- GDPR compliance
+- Weekly digest email — Monday morning, green/yellow/red, three sentences
+- Plain English Threat Feed — weekly real-world threat briefing cross-referenced against the user's actual network
 
-### Phase 7 — Intelligence & Integrations
-- CVE database integration — real known vulnerabilities updated daily
-- VirusTotal API — check IPs and files against malware databases
-- AbuseIPDB — check if an IP has been reported for malicious activity
-- Community pattern system — users report unknown threats, reviewed and added to database
-- Risk score aligned with CVSS standard
-
-### Phase 8 — Deployment & Scale
-- reconai.io — hosted online version
-- Local downloadable version
-- User accounts and scan history
-- Team/organization accounts
-- Scheduled automated scans
-- Multi-language support — Arabic, Spanish, French
+### Phase 12 — Business Model
+- Freemium model — core tools always free
+- Premium tier: Private Mode (local Ollama AI), scheduled automated scans, organizational accounts, priority support
+- Open source on GitHub
+- Product Hunt launch
+- Multi-language: Arabic, Spanish, French
 
 ---
 
-## 8. The Market Opportunity
+## 8. Security Standards
+
+These are non-negotiable for Recon AI before any public release:
+
+- API keys stored in environment variables only — never in frontend code, never committed to GitHub
+- All user input validated and sanitized — IP addresses, log paths, traceroute hosts
+- Rate limiting on all public endpoints before Phase 11 launch
+- Authentication via Clerk, Firebase, or Supabase — never built from scratch
+- HTTPS enforced on all deployed versions
+- Full security audit pass before launch using hardening prompts
+- No data stored on any server without explicit user consent
+
+---
+
+## 9. The Market Opportunity
 
 The cybersecurity tools market splits into two groups with a massive gap in between:
 
@@ -181,7 +225,7 @@ The cybersecurity tools market splits into two groups with a massive gap in betw
 
 ---
 
-## 9. Technology Stack
+## 10. Technology Stack
 
 | Technology | Role |
 |---|---|
@@ -194,7 +238,7 @@ The cybersecurity tools market splits into two groups with a massive gap in betw
 
 ---
 
-## 10. Legal Considerations
+## 11. Legal Considerations
 
 ### Before Local Release
 - LICENSE file — open source terms
@@ -216,9 +260,9 @@ The cybersecurity tools market splits into two groups with a massive gap in betw
 
 ---
 
-## 11. The Vision — In One Paragraph
+## 12. The Vision — In One Paragraph
 
-*Recon AI will become the tool that makes cybersecurity accessible to everyone on earth. Not by replacing security professionals — but by giving everyone else a fighting chance. Every small business, every school, every clinic, every home. They deserve to know if their network is safe. They deserve answers in plain English. They deserve a tool that is FOR them, not pointed AT them. That is what Recon AI is. That is what it will always be.*
+*Recon AI will become the silent defender against his own kind. A tool that protects everyday people from real threats — including AI-powered attacks — explained entirely in plain English. Not just a scanner. A guardian that watches, remembers, and speaks only when it needs to. For the small business with no IT team. For the clinic protecting patient data. For the parent who wants to know if a stranger is on their WiFi. For the school IT admin in rural Virginia who just needs green, yellow, or red every Monday morning. They all deserve to feel safe. Recon AI is built to make that happen — for everyone, everywhere, in sha Allah.*
 
 **Still building. 🚀**
 
