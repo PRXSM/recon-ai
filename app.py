@@ -14,6 +14,10 @@ from network_intel import (
     get_active_connections, group_connections, explain_connection,
     run_traceroute, explain_hop,
 )
+from scan_memory import (
+    save_scan, get_last_scan,
+    get_new_devices, init_db
+)
 from dotenv import load_dotenv
 import datetime
 import logging
@@ -26,6 +30,7 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
 app = Flask(__name__)
+init_db()
 
 # input validation
 def is_valid_ip(ip):
@@ -270,6 +275,19 @@ def scan():
     report_data["score_label"] = label
     report_data["score_emoji"] = emoji
 
+    # Phase 6 — Scan Memory
+    # Get previous scan for comparison
+    last_scan = get_last_scan(ip)
+
+    # Detect new devices
+    new_devices = []
+    if "network_mapper" in tools:
+        current_devices = report_data.get("live_hosts", [])
+        new_devices = get_new_devices(current_devices, ip)
+
+    # Save this scan to memory
+    save_scan(report_data, ip, timestamp)
+
     # AI Analysis
     ai_analysis = None
     if use_ai:
@@ -300,7 +318,9 @@ def scan():
         ai_analysis=ai_analysis,
         offline_explanations=offline_explanations,
         timestamp=timestamp,
-        text_report=text_report)
+        text_report=text_report,
+        last_scan=last_scan,
+        new_devices=new_devices)
 
 @app.route("/network-intel")
 def network_intel():
