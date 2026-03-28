@@ -47,6 +47,39 @@ def analyze_with_ai(scan_data):
     )
     return message.content[0].text
 
+def analyze_with_ollama(scan_data):
+    """
+    Private Mode — runs entirely on the user's machine via Ollama.
+    Zero data leaves the device.
+    Requires Ollama running locally with llama3.2 model installed.
+    """
+    import requests
+    logger.info("Sending scan data to local Ollama model (Private Mode)...")
+
+    payload = {
+        "model": "llama3.2",
+        "prompt": f"{SYSTEM_PROMPT}\n\nPlease analyze these security scan results:\n\n{scan_data}",
+        "stream": False
+    }
+
+    try:
+        response = requests.post(
+            "http://localhost:11434/api/generate",
+            json=payload,
+            timeout=120
+        )
+        response.raise_for_status()
+        return response.json().get("response", "Private Mode analysis unavailable.")
+    except requests.exceptions.ConnectionError:
+        return (
+            "Private Mode unavailable — "
+            "Ollama is not running. "
+            "Start it with 'ollama serve' in your terminal, then try again."
+        )
+    except Exception as e:
+        logger.error(f"Ollama error: {e}")
+        return "Private Mode analysis failed. Your scan results are shown below."
+
 def save_report(scan_data, ai_analysis, timestamp, filename):
     logger.info(f"Saving AI report to {filename}")
     with open(filename, "w") as f:

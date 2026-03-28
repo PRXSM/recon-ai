@@ -192,6 +192,7 @@ def scan():
     timestamp = datetime.datetime.now().isoformat()
 
     use_ai = "ai_analysis" in tools
+    ai_mode = request.form.get("ai_mode", "offline")
     needs_target = any(t in tools for t in ("port_scanner", "network_mapper", "vuln_reporter"))
 
     # validate IP when a network tool is selected
@@ -293,7 +294,11 @@ def scan():
     if use_ai:
         try:
             summary = build_scan_summary(report_data)
-            raw = analyze_with_ai(summary)
+            if ai_mode == "private":
+                from ai_assistant import analyze_with_ollama
+                raw = analyze_with_ollama(summary)
+            else:
+                raw = analyze_with_ai(summary)
             ai_analysis = md.markdown(raw, extensions=["fenced_code", "tables"])
         except Exception as e:
             logger.error(f"AI analysis failed: {e}", exc_info=True)

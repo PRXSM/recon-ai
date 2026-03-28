@@ -103,6 +103,23 @@
             font-size: 0.85em;
             color: #aaaaaa;
         }
+        .ai-mode-card {
+            flex: 1;
+            background: #111;
+            border: 1px solid #2a2a2a;
+            border-radius: 8px;
+            padding: 12px 10px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.15s;
+            user-select: none;
+        }
+        .ai-mode-card:hover { border-color: #00bfff; }
+        .ai-mode-card.selected { border-color: #00bfff; background: #0d1f2d; }
+        .ai-mode-icon { font-size: 1.4em; margin-bottom: 5px; }
+        .ai-mode-name { color: #e0e0e0; font-weight: bold; font-size: 0.85em; margin-bottom: 4px; }
+        .ai-mode-desc { color: #666; font-size: 0.72em; line-height: 1.4; }
+        .ai-mode-card.selected .ai-mode-desc { color: #888; }
     </style>
 </head>
 <body>
@@ -155,12 +172,30 @@
                     <div class="tool-desc">Map open ports to known CVEs</div>
                 </label>
             </div>
-            <div class="tool-card" id="card_ai_analysis" onclick="toggleTool('ai_analysis', this)" style="grid-column: span 2;">
-                <input type="checkbox" name="tools" value="ai_analysis" id="ai_analysis">
-                <label for="ai_analysis">
-                    <div class="tool-name">🤖 AI Analysis</div>
-                    <div class="tool-desc">Send findings to Claude for plain-English explanation (requires API key in .env)</div>
-                </label>
+            <div class="tool-card" id="card_ai_analysis" style="grid-column: span 2; cursor:default;">
+                <input type="checkbox" name="tools" value="ai_analysis" id="ai_analysis" style="display:none;">
+                <div class="tool-name" style="margin-bottom:10px;">🤖 AI Analysis</div>
+                <div class="tool-desc" style="margin-bottom:12px;">Choose how Recon AI explains your findings.</div>
+                <div style="display:flex; gap:8px;">
+                    <div class="ai-mode-card selected" id="mode_offline" onclick="selectAIMode('offline', this)">
+                        <input type="radio" name="ai_mode" value="offline" checked style="display:none;">
+                        <div class="ai-mode-icon">📖</div>
+                        <div class="ai-mode-name">Offline</div>
+                        <div class="ai-mode-desc">Built-in knowledge base. Nothing sent anywhere. Always free.</div>
+                    </div>
+                    <div class="ai-mode-card" id="mode_standard" onclick="selectAIMode('standard', this)">
+                        <input type="radio" name="ai_mode" value="standard" style="display:none;">
+                        <div class="ai-mode-icon">🌐</div>
+                        <div class="ai-mode-name">Standard</div>
+                        <div class="ai-mode-desc">Claude AI explains everything. Anonymized findings only. Opt-in.</div>
+                    </div>
+                    <div class="ai-mode-card" id="mode_private" onclick="selectAIMode('private', this)">
+                        <input type="radio" name="ai_mode" value="private" style="display:none;">
+                        <div class="ai-mode-icon">🔒</div>
+                        <div class="ai-mode-name">Private</div>
+                        <div class="ai-mode-desc">Local AI on your machine. Zero data leaves. Ever.</div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -221,6 +256,13 @@
             el.classList.add('selected');
             document.getElementById('int_' + value).checked = true;
             document.getElementById('idsWarning').style.display = (value === 'professional') ? 'block' : 'none';
+        }
+        function selectAIMode(mode, el) {
+            document.querySelectorAll('.ai-mode-card').forEach(c => c.classList.remove('selected'));
+            el.classList.add('selected');
+            el.querySelector('input[type="radio"]').checked = true;
+            const aiCheckbox = document.getElementById('ai_analysis');
+            aiCheckbox.checked = (mode === 'standard' || mode === 'private');
         }
     </script>
 </body>
