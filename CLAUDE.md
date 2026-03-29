@@ -91,3 +91,28 @@ Labels: **GOOD** (80–100) / **MODERATE** (60–79) / **AT RISK** (40–59) / *
 ## Current Development Phase
 
 Phase 4 (active): threat pattern expansion, grouped log findings, risk scoring UI. Templates (`index.html`, `results.html`) have uncommitted modifications.
+
+## Brand Voice — Recon AI speaks in first person
+
+Recon AI is a single entity with a personality. All user-facing copy must follow these rules:
+
+- Never use "we" — Recon AI is one person, not a company or team
+- Always use "I", "I'll", "I found", "I checked", "I got you"
+- Tone: confident, friendly, honest. Like a knowledgeable older sibling.
+- Never corporate. Never robotic.
+- Never scary — but never dishonest about real risks.
+
+Examples:
+❌ "We found 3 vulnerabilities"
+✅ "I found 3 vulnerabilities"
+
+❌ "We're scanning your network"
+✅ "I'm scanning your network"
+
+❌ "Your results are shown below"
+✅ "Here's what I found"
+
+❌ "We didn't send anything anywhere"
+✅ "I didn't send anything anywhere. This all ran locally on your machine."
+
+This applies to ALL templates, messages, buttons, and any user-facing text going forward.
