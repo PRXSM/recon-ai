@@ -1,6 +1,7 @@
 from datetime import datetime
 import ipaddress
 import logging
+import re
 import subprocess
 import platform
 
@@ -21,13 +22,38 @@ def ping_host(ip):
     )
     return result.returncode == 0
 
+def get_mac_from_arp(ip):
+    """
+    Get MAC address of an IP from the local ARP cache.
+    Works on macOS and Linux.
+    Returns MAC string or None.
+    """
+    try:
+        result = subprocess.run(
+            ["arp", "-n", str(ip)],
+            capture_output=True,
+            text=True,
+            timeout=2
+        )
+        mac_pattern = r"([0-9a-fA-F]{1,2}(?::[0-9a-fA-F]{1,2}){5})"
+        match = re.search(mac_pattern, result.stdout)
+        if match:
+            return match.group(1).lower()
+        return None
+    except Exception:
+        return None
+
 def scan_subnet(subnet):
     logger.info(f"Scanning {subnet}")
     live_hosts = []
     for ip in ipaddress.IPv4Network(subnet, strict=False):
         if ping_host(ip):
             logger.info(f"Host found: {ip}")
-            live_hosts.append(str(ip))
+            mac = get_mac_from_arp(ip)
+            live_hosts.append({
+                "ip": str(ip),
+                "mac": mac or ""
+            })
     return live_hosts
 
 
@@ -39,7 +65,8 @@ def save_report(subnet, live_hosts, timestamp, filename):
         f.write(f"Time: {timestamp}\n")
         f.write("="*40 + "\n")
         for host in live_hosts:
-            f.write(f"[+] {host} - ALIVE\n")
+            ip = host["ip"] if isinstance(host, dict) else host
+            f.write(f"[+] {ip} - ALIVE\n")
         f.write(f"\nTotal hosts found: {len(live_hosts)}\n")
 
 def main():
@@ -54,5 +81,6 @@ def main():
     save_report(subnet, live_hosts, timestamp, filename)
     print(f"\nScan complete. {len(live_hosts)} hosts found.")
     print(f"Report saved to: {filename}")
+
 if __name__ == "__main__":
     main()

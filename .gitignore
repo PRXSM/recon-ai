@@ -14,6 +14,9 @@ venv/
 # Scan history database — local only, never committed
 scans.db
 
+# OUI vendor database — downloaded at setup, not committed (3.6 MB)
+oui.csv
+
 # Internal docs — private, not tracked
 RECON_AI_Roadmap.md
 Recon_AI_Roadmap.docx

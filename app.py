@@ -18,6 +18,7 @@ from scan_memory import (
     save_scan, get_last_scan,
     get_new_devices, init_db
 )
+from device_fingerprint import fingerprint_device
 from dotenv import load_dotenv
 import datetime
 import logging
@@ -74,7 +75,8 @@ def network_scan(target):
     all_ports = []
     for host in live_hosts:
         try:
-            ports = scan_target(host)
+            host_ip = host["ip"] if isinstance(host, dict) else host
+            ports = scan_target(host_ip)
             all_ports.extend(ports)
         except Exception as e:
             logger.error(f"Port scan failed on {host}: {e}")
@@ -156,7 +158,8 @@ def build_text_report(report_data, ai_analysis, timestamp):
     if report_data.get("live_hosts"):
         lines.append("\nDEVICES FOUND ON YOUR NETWORK:")
         for host in report_data["live_hosts"]:
-            lines.append(f"  {host}")
+            ip = host["ip"] if isinstance(host, dict) else host
+            lines.append(f"  {ip}")
 
     if report_data.get("vulnerabilities"):
         lines.append("\nVULNERABILITIES:")
@@ -232,15 +235,25 @@ def scan():
         except Exception as e:
             logger.error(f"Network scan failed: {e}")
             live_hosts = []
-        report_data["live_hosts"] = live_hosts
+        # Fingerprint each discovered host
+        fingerprinted = []
+        for host in live_hosts:
+            try:
+                fingerprinted.append(
+                    fingerprint_device(host["ip"], host.get("mac"))
+                )
+            except Exception as e:
+                logger.error(f"Fingerprint failed for {host}: {e}")
+                fingerprinted.append({"ip": host["ip"], "mac": host.get("mac", ""), "display": host["ip"]})
+        report_data["live_hosts"] = fingerprinted
         # also port-scan discovered hosts
-        if live_hosts and "port_scanner" not in tools:
+        if fingerprinted and "port_scanner" not in tools:
             all_ports = []
-            for host in live_hosts:
+            for host in fingerprinted:
                 try:
-                    all_ports.extend(scan_target(host))
+                    all_ports.extend(scan_target(host["ip"]))
                 except Exception as e:
-                    logger.error(f"Port scan failed on {host}: {e}")
+                    logger.error(f"Port scan failed on {host['ip']}: {e}")
             report_data.setdefault("open_ports", []).extend(all_ports)
 
     # Log Analyzer

@@ -343,9 +343,92 @@
 
     {% if report_data.live_hosts %}
     <h2>🖥️ Devices Found on Your Network</h2>
-    <p style="font-size:0.85em;">These devices responded to our scan. Recognize all of them?</p>
-    {% for host in report_data.live_hosts %}
-    <div class="card">{{ host }}</div>
+    <p style="font-size:0.85em; color:#888; margin-bottom:16px;">
+        I found {{ report_data.live_hosts | length }} device{% if report_data.live_hosts | length != 1 %}s{% endif %} on your network. Tap any group to see details.
+    </p>
+
+    <div style="background:#0d0d0d; border:1px solid #1a1a1a; border-radius:8px; padding:12px 16px; margin-bottom:16px;">
+        <div style="font-size:0.72em; text-transform:uppercase; letter-spacing:0.06em; color:#333; margin-bottom:10px;">Device Legend</div>
+        <div style="display:flex; flex-wrap:wrap; gap:8px;">
+            {% for lemoji, llabel in [
+                ("🍎", "Apple"),
+                ("📱", "Samsung"),
+                ("🔵", "Google"),
+                ("📦", "Amazon"),
+                ("🎮", "Sony / Nintendo"),
+                ("🪟", "Microsoft"),
+                ("💻", "Computer"),
+                ("📡", "Router / Network"),
+                ("⚙️", "IoT / Smart"),
+                ("🔌", "Unknown"),
+            ] %}
+            <span style="background:#111; border:1px solid #222; border-radius:20px; padding:3px 10px; font-size:0.75em; color:#666; white-space:nowrap;">
+                {{ lemoji }} {{ llabel }}
+            </span>
+            {% endfor %}
+        </div>
+    </div>
+
+    {% set group_order = [
+        ("🍎", "Apple device"),
+        ("📱", "Samsung device"),
+        ("🔵", "Google device"),
+        ("📦", "Amazon device"),
+        ("🎮", "Sony device"),
+        ("🎮", "Nintendo device"),
+        ("🪟", "Microsoft device"),
+        ("💻", "Computer or laptop"),
+        ("📡", "Router or network device"),
+        ("⚙️", "IoT or smart device"),
+        ("🔌", "Unknown device"),
+    ] %}
+
+    {% for emoji, label in group_order %}
+        {% set group_devices = [] %}
+        {% for host in report_data.live_hosts %}
+            {% if (host.label if host.label is defined else "Unknown device") == label %}
+                {% if group_devices.append(host) %}{% endif %}
+            {% endif %}
+        {% endfor %}
+
+        {% if group_devices %}
+        <div class="device-group" style="margin-bottom:8px;">
+            <div class="device-group-header" onclick="toggleGroup(this)"
+                 style="display:flex; align-items:center; gap:10px; padding:12px 16px;
+                        background:#111; border:1px solid #1e1e1e; border-radius:8px;
+                        cursor:pointer; transition:background 0.15s; user-select:none;">
+                <span style="font-size:1.2em;">{{ emoji }}</span>
+                <span style="color:#e0e0e0; font-weight:bold; font-size:0.9em; flex:1;">{{ label }}</span>
+                <span style="background:#1a1a2a; color:#00bfff; border:1px solid #2a2a4a;
+                             border-radius:10px; padding:2px 10px; font-size:0.78em; font-weight:bold;">
+                    {{ group_devices | length }}
+                </span>
+                <span class="group-chevron" style="color:#333; font-size:0.75em;">▼</span>
+            </div>
+            <div class="device-group-body" style="display:none; border:1px solid #1e1e1e;
+                 border-top:none; border-radius:0 0 8px 8px; background:#0c0c0c; overflow:hidden;">
+                {% for host in group_devices %}
+                <div style="padding:10px 16px; border-bottom:1px solid #141414;
+                            display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <span style="font-family:monospace; color:#7fd8ff; font-size:0.88em;">{{ host.ip }}</span>
+                        {% if host.hostname %}
+                        <span style="color:#555; font-size:0.78em; margin-left:8px;">{{ host.hostname }}</span>
+                        {% endif %}
+                    </div>
+                    <div style="text-align:right; font-size:0.75em; color:#444;">
+                        {% if host.vendor and host.vendor != "Unknown" %}
+                        <div style="color:#555;">{{ host.vendor }}</div>
+                        {% endif %}
+                        {% if host.mac %}
+                        <div style="font-family:monospace; color:#333;">{{ host.mac }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
     {% endfor %}
     {% endif %}
 
@@ -444,6 +527,16 @@
     <script>
     function toggleVerifyDeep(t) {
         t.nextElementSibling.classList.toggle('open');
+    }
+    function toggleGroup(header) {
+        const body = header.nextElementSibling;
+        const chevron = header.querySelector('.group-chevron');
+        const isOpen = body.style.display !== 'none';
+        body.style.display = isOpen ? 'none' : 'block';
+        chevron.style.transform = isOpen ? '' : 'rotate(180deg)';
+        header.style.background = isOpen ? '#111' : '#0d1a26';
+        header.style.borderColor = isOpen ? '#1e1e1e' : '#00bfff';
+        header.style.borderRadius = isOpen ? '8px' : '8px 8px 0 0';
     }
     </script>
 </body>

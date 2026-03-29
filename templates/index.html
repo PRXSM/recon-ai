@@ -120,6 +120,19 @@
         .ai-mode-name { color: #e0e0e0; font-weight: bold; font-size: 0.85em; margin-bottom: 4px; }
         .ai-mode-desc { color: #666; font-size: 0.72em; line-height: 1.4; }
         .ai-mode-card.selected .ai-mode-desc { color: #888; }
+        .depth-btn {
+            flex: 1;
+            background: #0d0d0d;
+            border: 1px solid #2a2a2a;
+            border-radius: 6px;
+            padding: 7px 10px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.15s;
+            color: #e0e0e0;
+        }
+        .depth-btn:hover { border-color: #00bfff; }
+        .depth-btn.selected { border-color: #00bfff; background: #0a1a2a; }
     </style>
 </head>
 <body>
@@ -150,6 +163,24 @@
                     <div class="tool-name">🔓 Port Scanner</div>
                     <div class="tool-desc">I scan TCP ports 1–1024 and find every open door on your network</div>
                 </label>
+                <div id="depth_selector" style="display:none; margin-top:10px; border-top:1px solid #1a1a1a; padding-top:10px;">
+                    <div style="font-size:0.75em; color:#555; margin-bottom:6px;">Scan Depth</div>
+                    <div style="display:flex; gap:6px;">
+                        <div class="depth-btn selected" id="btn_simple" onclick="event.stopPropagation(); selectDepth('simple', this)">
+                            <input type="radio" name="scan_depth" value="simple" id="depth_simple" checked style="display:none;">
+                            <div style="font-weight:bold; font-size:0.8em;">Simple</div>
+                            <div style="font-size:0.7em; color:#666;">Ports 1–1024</div>
+                        </div>
+                        <div class="depth-btn" id="btn_deep" onclick="event.stopPropagation(); selectDepth('deep', this)">
+                            <input type="radio" name="scan_depth" value="deep" id="depth_deep" style="display:none;">
+                            <div style="font-weight:bold; font-size:0.8em;">Deep</div>
+                            <div style="font-size:0.7em; color:#666;">All 65,535 ports</div>
+                        </div>
+                    </div>
+                    <div id="deepScanWarning" style="display:none; margin-top:8px; color:#44cc77; font-size:0.75em; line-height:1.4;">
+                        🔍 I'll check every single port — all 65,535 of them. Give me 3–5 minutes. Worth it.
+                    </div>
+                </div>
             </div>
             <div class="tool-card" id="card_network_mapper" onclick="toggleTool('network_mapper', this)">
                 <input type="checkbox" name="tools" value="network_mapper" id="network_mapper">
@@ -228,27 +259,6 @@
             Only use on networks you own and control.
         </div>
 
-        <label style="margin-top:16px; display:block; color:#aaa; font-size:0.9em;">Scan Depth</label>
-        <div class="intensity-group">
-            <div class="intensity-option selected" id="opt_simple" onclick="selectDepth('simple', this)">
-                <input type="radio" name="scan_depth" value="simple" id="depth_simple" checked>
-                <label for="depth_simple">
-                    <div class="intensity-name">Simple</div>
-                    <div class="intensity-desc">Ports 1–1024. Fast.</div>
-                </label>
-            </div>
-            <div class="intensity-option" id="opt_deep" onclick="selectDepth('deep', this)">
-                <input type="radio" name="scan_depth" value="deep" id="depth_deep">
-                <label for="depth_deep">
-                    <div class="intensity-name">Deep</div>
-                    <div class="intensity-desc">All 65,535 ports. 3–5 min.</div>
-                </label>
-            </div>
-        </div>
-        <div id="deepScanWarning" style="display:none; background:#0d1a0d; border-left:3px solid #44cc77; padding:10px 14px; margin-top:8px; color:#44cc77; font-size:0.82em; border-radius:0 4px 4px 0;">
-            🔍 I'll check every single port — all 65,535 of them. I'll find anything hiding on non-standard ports. Give me 3–5 minutes. Worth it.
-        </div>
-
         <div class="privacy-notice">
             ⚠️ <strong>Legal Notice:</strong> I'm built to help you understand
             and protect YOUR OWN network. Scanning networks you don't
@@ -271,6 +281,13 @@
             const cb = document.getElementById(id);
             cb.checked = !cb.checked;
             card.classList.toggle('checked', cb.checked);
+            if (id === 'port_scanner') {
+                const depthSelector = document.getElementById('depth_selector');
+                depthSelector.style.display = cb.checked ? 'block' : 'none';
+                if (!cb.checked) {
+                    selectDepth('simple', document.getElementById('btn_simple'));
+                }
+            }
         }
         function selectIntensity(value, el) {
             document.querySelectorAll('.intensity-option').forEach(o => o.classList.remove('selected'));
@@ -286,7 +303,7 @@
             aiCheckbox.checked = (mode === 'standard' || mode === 'private');
         }
         function selectDepth(value, el) {
-            document.querySelectorAll('#opt_simple, #opt_deep').forEach(o => o.classList.remove('selected'));
+            document.querySelectorAll('.depth-btn').forEach(b => b.classList.remove('selected'));
             el.classList.add('selected');
             document.getElementById('depth_' + value).checked = true;
             document.getElementById('deepScanWarning').style.display = value === 'deep' ? 'block' : 'none';
