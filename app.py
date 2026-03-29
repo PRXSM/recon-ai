@@ -189,6 +189,7 @@ def scan():
     ip = request.form.get("target", "").strip()
     tools = request.form.getlist("tools")   # list of checked tool values
     intensity = request.form.get("intensity", "normal").strip()
+    scan_depth = request.form.get("scan_depth", "simple").strip()
     timestamp = datetime.datetime.now().isoformat()
 
     use_ai = "ai_analysis" in tools
@@ -214,7 +215,11 @@ def scan():
     # Port Scanner
     if "port_scanner" in tools:
         try:
-            open_ports = scan_target(ip)
+            if scan_depth == "deep":
+                from port_scanner import deep_scan
+                open_ports = deep_scan(ip)
+            else:
+                open_ports = scan_target(ip)
         except Exception as e:
             logger.error(f"Port scan failed: {e}")
             open_ports = []

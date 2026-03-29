@@ -133,9 +133,9 @@
     <p>Your personal network security advisor. Scan your own network, understand what's exposed, and learn how to protect it.</p>
 
     <div class="privacy-notice">
-        🔒 <strong>Privacy First:</strong> Recon AI only scans networks you own.
-        It runs entirely on your machine. No data is sent anywhere without 
-         your permission. Think of it as a mirror — not a microscope pointed at others.
+        🔒 <strong>Privacy First:</strong> I only scan networks you own.
+        I run entirely on your machine. I don't send anything anywhere without
+        your say so. Think of me as a mirror — not a weapon pointed at others.
     </div>
 
     <form action="/scan" method="POST">
@@ -148,34 +148,34 @@
                 <input type="checkbox" name="tools" value="port_scanner" id="port_scanner">
                 <label for="port_scanner">
                     <div class="tool-name">🔓 Port Scanner</div>
-                    <div class="tool-desc">Scan TCP ports 1–1024 for open services</div>
+                    <div class="tool-desc">I scan TCP ports 1–1024 and find every open door on your network</div>
                 </label>
             </div>
             <div class="tool-card" id="card_network_mapper" onclick="toggleTool('network_mapper', this)">
                 <input type="checkbox" name="tools" value="network_mapper" id="network_mapper">
                 <label for="network_mapper">
                     <div class="tool-name">🖥️ Network Mapper</div>
-                    <div class="tool-desc">Discover live hosts on your subnet</div>
+                    <div class="tool-desc">I find every device on your network and map who's there</div>
                 </label>
             </div>
             <div class="tool-card" id="card_log_analyzer" onclick="toggleTool('log_analyzer', this)">
                 <input type="checkbox" name="tools" value="log_analyzer" id="log_analyzer">
                 <label for="log_analyzer">
                     <div class="tool-name">📋 Log Analyzer</div>
-                    <div class="tool-desc">Scan local system logs for threats</div>
+                    <div class="tool-desc">I read your system logs and flag anything suspicious</div>
                 </label>
             </div>
             <div class="tool-card" id="card_vuln_reporter" onclick="toggleTool('vuln_reporter', this)">
                 <input type="checkbox" name="tools" value="vuln_reporter" id="vuln_reporter">
                 <label for="vuln_reporter">
                     <div class="tool-name">⚠️ Vulnerability Reporter</div>
-                    <div class="tool-desc">Map open ports to known CVEs</div>
+                    <div class="tool-desc">I check your open ports against known vulnerabilities and rate the risk</div>
                 </label>
             </div>
             <div class="tool-card" id="card_ai_analysis" style="grid-column: span 2; cursor:default;">
                 <input type="checkbox" name="tools" value="ai_analysis" id="ai_analysis" style="display:none;">
                 <div class="tool-name" style="margin-bottom:10px;">🤖 AI Analysis</div>
-                <div class="tool-desc" style="margin-bottom:12px;">Choose how Recon AI explains your findings.</div>
+                <div class="tool-desc" style="margin-bottom:12px;">Choose how I explain your findings.</div>
                 <div style="display:flex; gap:8px;">
                     <div class="ai-mode-card selected" id="mode_offline" onclick="selectAIMode('offline', this)">
                         <input type="radio" name="ai_mode" value="offline" checked style="display:none;">
@@ -228,9 +228,30 @@
             Only use on networks you own and control.
         </div>
 
+        <label style="margin-top:16px; display:block; color:#aaa; font-size:0.9em;">Scan Depth</label>
+        <div class="intensity-group">
+            <div class="intensity-option selected" id="opt_simple" onclick="selectDepth('simple', this)">
+                <input type="radio" name="scan_depth" value="simple" id="depth_simple" checked>
+                <label for="depth_simple">
+                    <div class="intensity-name">Simple</div>
+                    <div class="intensity-desc">Ports 1–1024. Fast.</div>
+                </label>
+            </div>
+            <div class="intensity-option" id="opt_deep" onclick="selectDepth('deep', this)">
+                <input type="radio" name="scan_depth" value="deep" id="depth_deep">
+                <label for="depth_deep">
+                    <div class="intensity-name">Deep</div>
+                    <div class="intensity-desc">All 65,535 ports. 3–5 min.</div>
+                </label>
+            </div>
+        </div>
+        <div id="deepScanWarning" style="display:none; background:#0d1a0d; border-left:3px solid #44cc77; padding:10px 14px; margin-top:8px; color:#44cc77; font-size:0.82em; border-radius:0 4px 4px 0;">
+            🔍 I'll check every single port — all 65,535 of them. I'll find anything hiding on non-standard ports. Give me 3–5 minutes. Worth it.
+        </div>
+
         <div class="privacy-notice">
-            ⚠️ <strong>Legal Notice:</strong> Recon AI is designed to help you
-            understand and protect YOUR OWN network. Scanning networks you don't
+            ⚠️ <strong>Legal Notice:</strong> I'm built to help you understand
+            and protect YOUR OWN network. Scanning networks you don't
             own is illegal under the Computer Fraud and Abuse Act (CFAA) and
             equivalent laws worldwide.
             <br><br>
@@ -263,6 +284,12 @@
             el.querySelector('input[type="radio"]').checked = true;
             const aiCheckbox = document.getElementById('ai_analysis');
             aiCheckbox.checked = (mode === 'standard' || mode === 'private');
+        }
+        function selectDepth(value, el) {
+            document.querySelectorAll('#opt_simple, #opt_deep').forEach(o => o.classList.remove('selected'));
+            el.classList.add('selected');
+            document.getElementById('depth_' + value).checked = true;
+            document.getElementById('deepScanWarning').style.display = value === 'deep' ? 'block' : 'none';
         }
     </script>
 </body>
