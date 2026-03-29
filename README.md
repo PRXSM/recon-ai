@@ -182,7 +182,8 @@ Deductions: -2 per open port, up to -20 per critical vulnerability, up to -10 pe
 | ✅ | 30+ threat patterns, cross-tool correlation, downloadable reports | Done |
 | ✅ | Phase 5 — Network Intelligence — interfaces, ARP, netstat, traceroute, accordion UI, CIDR validation, AI analysis | Complete |
 | ✅ | Phase 6 — The Guardian Update — scan memory, unknown device alerts, three AI mode selector (Offline/Standard/Private), local Ollama integration | Complete |
-| 🔨 | Phase 7 — Deep Scan Mode — full 65,535 port scanning with threading, Simple vs Deep scan profiles | Next |
+| ✅ | Phase 7 — Deep Scan Mode — full 65,535 port scanning with threading, device fingerprinting, MAC vendor lookup, grouped device UI with descriptions | Complete |
+| 🔨 | Phase 8 — System Inspector — suspicious process detector, startup item analyzer | Next |
 
 ---
 
