@@ -83,41 +83,69 @@ def get_hostname(ip):
 
 def get_device_emoji(vendor):
     """
-    Return an emoji and device type label based on vendor name.
+    Return an emoji, device type label, and plain English description based on vendor name.
     """
     if not vendor or vendor == "Unknown":
-        return "🔌", "Unknown device"
+        return "🔌", "Unknown device", (
+            "I couldn't identify this device. "
+            "It may be using a randomized MAC address for privacy — common on "
+            "iPhones and Android phones. "
+            "If you don't recognize this IP, investigate it."
+        )
 
     v = vendor.lower()
 
-    if any(x in v for x in ["apple"]):
-        return "🍎", "Apple device"
-    if any(x in v for x in ["samsung"]):
-        return "📱", "Samsung device"
-    if any(x in v for x in ["google"]):
-        return "🔵", "Google device"
-    if any(x in v for x in ["amazon"]):
-        return "📦", "Amazon device"
-    if any(x in v for x in ["sony"]):
-        return "🎮", "Sony device"
-    if any(x in v for x in ["microsoft"]):
-        return "🪟", "Microsoft device"
+    if "apple" in v:
+        return "🍎", "Apple device", (
+            "An Apple device — likely an iPhone, iPad, MacBook, or Apple TV."
+        )
+    if "samsung" in v:
+        return "📱", "Samsung device", (
+            "A Samsung device — likely a phone, tablet, or smart TV."
+        )
+    if "google" in v:
+        return "🔵", "Google device", (
+            "A Google device — likely a Pixel phone, Chromecast, or Nest device."
+        )
+    if "amazon" in v:
+        return "📦", "Amazon device", (
+            "An Amazon device — likely an Echo, Fire TV stick, or Ring doorbell."
+        )
+    if "sony" in v:
+        return "🎮", "Sony device", (
+            "A Sony device — likely a PlayStation or Sony TV."
+        )
+    if "microsoft" in v:
+        return "🪟", "Microsoft device", (
+            "A Microsoft device — likely a Windows PC, Xbox, or Surface."
+        )
     if any(x in v for x in [
         "netgear", "tp-link", "tplink", "asus", "linksys",
-        "ubiquiti", "cisco", "arris", "motorola", "eero", "orbi"
+        "ubiquiti", "cisco", "arris", "motorola", "eero", "orbi", "commscope"
     ]):
-        return "📡", "Router or network device"
-    if any(x in v for x in ["nintendo"]):
-        return "🎮", "Nintendo device"
+        return "📡", "Router or network device", (
+            "A networking device — likely your router, a WiFi access point, or a network switch."
+        )
+    if "nintendo" in v:
+        return "🎮", "Nintendo device", (
+            "A Nintendo device — likely a Switch or other Nintendo console."
+        )
     if any(x in v for x in [
         "intel", "realtek", "broadcom", "dell", "hp ",
         "hewlett", "lenovo", "acer"
     ]):
-        return "💻", "Computer or laptop"
+        return "💻", "Computer or laptop", (
+            "A computer or laptop — identified by its network chip manufacturer."
+        )
     if any(x in v for x in ["espressif", "raspberry", "arduino", "particle"]):
-        return "⚙️", "IoT or smart device"
+        return "⚙️", "IoT or smart device", (
+            "A smart home device — Espressif chips power smart bulbs, plugs, and sensors."
+        )
 
-    return "🔌", f"Device by {vendor}"
+    return "🔌", f"Device by {vendor}", (
+        f"A device made by {vendor}. "
+        "I couldn't determine the exact device type from the vendor name."
+    )
 
 def fingerprint_device(ip, mac=None):
     """
@@ -137,7 +165,7 @@ def fingerprint_device(ip, mac=None):
     """
     vendor = get_vendor(mac) if mac else "Unknown"
     hostname = get_hostname(ip)
-    emoji, label = get_device_emoji(vendor)
+    emoji, label, description = get_device_emoji(vendor)
     display_name = hostname or label
 
     return {
@@ -147,5 +175,6 @@ def fingerprint_device(ip, mac=None):
         "hostname": hostname or "",
         "emoji": emoji,
         "label": label,
+        "description": description,
         "display": f"{emoji} {display_name}",
     }
