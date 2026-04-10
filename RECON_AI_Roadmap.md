@@ -237,6 +237,7 @@ These are the features that transform Recon AI from a scanner into a guardian.
 - Professional code review
 - Performance optimization
 - Bug fixes and edge case handling
+- AI analysis prompt handles sparse scans gracefully — when a user runs only one tool (e.g. Credential Scanner only), the AI currently improvises with generic advice instead of acknowledging what was scanned and confirming results cleanly. Fix requires: (1) build_scan_summary() in engine.py to include credential_assessment data, (2) AI prompt in ai_assistant.py to detect sparse summaries and respond appropriately — "I only ran X tool, here's what I found, run a full scan for a complete picture."
 - Documentation complete
 
 ### Phase 15 — UI Redesign
