@@ -472,6 +472,207 @@
     {% endfor %}
     {% endif %}
 
+    {% if system_inspection %}
+    <div style="margin-bottom:28px;">
+        <h2>🔍 System Inspector</h2>
+
+        {# Overall verdict #}
+        {% if system_inspection.overall_clean %}
+        <div style="background:#0d1a0d; border:1px solid #1a4a1a; border-radius:8px; padding:14px 18px; margin-bottom:16px;">
+            <span style="font-size:1.1em;">✅</span>
+            <span style="color:#44cc77; font-weight:bold; margin-left:8px;">Everything looks clean.</span>
+            <span style="color:#555; font-size:0.85em; margin-left:6px;">{{ system_inspection.summary }}</span>
+        </div>
+        {% else %}
+        <div style="background:#1a0a00; border:1px solid #cc6600; border-radius:8px; padding:14px 18px; margin-bottom:16px;">
+            <span style="font-size:1.1em;">⚠️</span>
+            <span style="color:#ff8800; font-weight:bold; margin-left:8px;">Findings detected.</span>
+            <span style="color:#888; font-size:0.85em; margin-left:6px;">{{ system_inspection.summary }}</span>
+        </div>
+        {% endif %}
+
+        {# Processes #}
+        {% set proc = system_inspection.processes %}
+        <div style="background:#0e0e0e; border:1px solid #1a1a1a; border-radius:8px; margin-bottom:10px; overflow:hidden;">
+            <div style="padding:12px 16px; display:flex; align-items:center; gap:10px; border-bottom:1px solid #1a1a1a;">
+                <span>⚙️</span>
+                <span style="color:#e0e0e0; font-weight:bold; font-size:0.9em; flex:1;">Running Processes</span>
+                <span style="color:#555; font-size:0.8em;">{{ proc.total_scanned }} scanned</span>
+                {% if proc.clean %}
+                <span style="color:#44cc77; font-size:0.8em; font-weight:bold;">✓ Clean</span>
+                {% else %}
+                <span style="color:#cc4444; font-size:0.8em; font-weight:bold;">⚠ {{ proc.flagged|length }} flagged</span>
+                {% endif %}
+            </div>
+            {% if not proc.clean %}
+            {% for item in proc.flagged %}
+            <div style="padding:10px 16px; border-bottom:1px solid #141414; background:#140800;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span style="font-family:monospace; color:#ff8800; font-size:0.85em;">{{ item.name }}</span>
+                    <span style="background:#2a0000; color:#cc4444; border:1px solid #441111; border-radius:10px; padding:2px 8px; font-size:0.72em; font-weight:bold;">{{ item.risk }}</span>
+                </div>
+                <div style="color:#666; font-size:0.78em; margin-top:4px; line-height:1.4;">{{ item.description }}</div>
+                <div style="color:#333; font-size:0.72em; font-family:monospace; margin-top:3px;">PID {{ item.pid }} — {{ item.command[:80] }}</div>
+            </div>
+            {% endfor %}
+            {% else %}
+            <div style="padding:10px 16px; color:#333; font-size:0.82em;">No suspicious processes found.</div>
+            {% endif %}
+        </div>
+
+        {# Startup Items #}
+        {% set startup = system_inspection.startup %}
+        <div style="background:#0e0e0e; border:1px solid #1a1a1a; border-radius:8px; margin-bottom:10px; overflow:hidden;">
+            <div style="padding:12px 16px; display:flex; align-items:center; gap:10px; border-bottom:1px solid #1a1a1a;">
+                <span>🚀</span>
+                <span style="color:#e0e0e0; font-weight:bold; font-size:0.9em; flex:1;">Startup Items</span>
+                <span style="color:#555; font-size:0.8em;">{{ startup.total_scanned }} scanned</span>
+                {% if startup.clean %}
+                <span style="color:#44cc77; font-size:0.8em; font-weight:bold;">✓ Clean</span>
+                {% else %}
+                <span style="color:#cc9933; font-size:0.8em; font-weight:bold;">⚠ {{ startup.flagged|length }} unrecognized</span>
+                {% endif %}
+            </div>
+            {% if not startup.clean %}
+            {% for item in startup.flagged %}
+            <div style="padding:10px 16px; border-bottom:1px solid #141414;">
+                <div style="font-family:monospace; color:#cc9933; font-size:0.82em;">{{ item.name }}</div>
+                {% if item.program %}
+                <div style="color:#444; font-size:0.75em; font-family:monospace; margin-top:2px;">{{ item.program }}</div>
+                {% endif %}
+                <div style="color:#555; font-size:0.78em; margin-top:4px; line-height:1.4;">{{ item.description }}</div>
+            </div>
+            {% endfor %}
+            {% else %}
+            <div style="padding:10px 16px; color:#333; font-size:0.82em;">All startup items are from recognized publishers.</div>
+            {% endif %}
+        </div>
+
+        {# Recent Changes #}
+        {% set changes = system_inspection.recent_changes %}
+        <div style="background:#0e0e0e; border:1px solid #1a1a1a; border-radius:8px; margin-bottom:10px; overflow:hidden;">
+            <div style="padding:12px 16px; display:flex; align-items:center; gap:10px; border-bottom:1px solid #1a1a1a;">
+                <span>📁</span>
+                <span style="color:#e0e0e0; font-weight:bold; font-size:0.9em; flex:1;">Recent System Changes</span>
+                <span style="color:#555; font-size:0.8em;">last {{ changes.days_checked }} days</span>
+                {% if changes.clean %}
+                <span style="color:#44cc77; font-size:0.8em; font-weight:bold;">✓ Clean</span>
+                {% else %}
+                <span style="color:#cc9933; font-size:0.8em; font-weight:bold;">⚠ {{ changes.flagged|length }} changes</span>
+                {% endif %}
+            </div>
+            {% if not changes.clean %}
+            {% for item in changes.flagged %}
+            <div style="padding:10px 16px; border-bottom:1px solid #141414;">
+                <div style="font-family:monospace; color:#7fd8ff; font-size:0.82em;">{{ item.path }}</div>
+                <div style="color:#444; font-size:0.75em; margin-top:2px;">Modified: {{ item.modified }}</div>
+                <div style="color:#555; font-size:0.78em; margin-top:4px; line-height:1.4;">{{ item.description }}</div>
+            </div>
+            {% endfor %}
+            {% else %}
+            <div style="padding:10px 16px; color:#333; font-size:0.82em;">No unexpected changes found in the last {{ changes.days_checked }} days.</div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if credential_assessment %}
+    <div style="margin-bottom:28px;">
+        <h2>🔐 Credential Risk Assessment</h2>
+
+        {# Overall verdict #}
+        {% if credential_assessment.clean %}
+        <div style="background:#0d1a0d; border:1px solid #1a4a1a; border-radius:8px; padding:14px 18px; margin-bottom:16px;">
+            <span style="font-size:1.1em;">✅</span>
+            <span style="color:#44cc77; font-weight:bold; margin-left:8px;">No credential risks found.</span>
+            <span style="color:#555; font-size:0.85em; margin-left:6px;">{{ credential_assessment.summary }}</span>
+        </div>
+        {% else %}
+        <div style="background:#1a0000; border:1px solid #cc0000; border-radius:8px; padding:14px 18px; margin-bottom:16px;">
+            <span style="font-size:1.1em;">🚨</span>
+            <span style="color:#ff4444; font-weight:bold; margin-left:8px;">Credential risks detected.</span>
+            <span style="color:#888; font-size:0.85em; margin-left:6px;">{{ credential_assessment.summary }}</span>
+        </div>
+        {% endif %}
+
+        {# Risk counts summary row #}
+        {% if not credential_assessment.clean %}
+        <div style="display:flex; gap:10px; margin-bottom:16px;">
+            {% if credential_assessment.critical_count > 0 %}
+            <div style="background:#2a0000; border:1px solid #441111; border-radius:8px; padding:10px 16px; flex:1; text-align:center;">
+                <div style="color:#ff4444; font-size:1.4em; font-weight:bold;">{{ credential_assessment.critical_count }}</div>
+                <div style="color:#cc4444; font-size:0.75em; font-weight:bold;">CRITICAL</div>
+            </div>
+            {% endif %}
+            {% if credential_assessment.high_count > 0 %}
+            <div style="background:#1a0800; border:1px solid #442211; border-radius:8px; padding:10px 16px; flex:1; text-align:center;">
+                <div style="color:#ff8800; font-size:1.4em; font-weight:bold;">{{ credential_assessment.high_count }}</div>
+                <div style="color:#cc6600; font-size:0.75em; font-weight:bold;">HIGH</div>
+            </div>
+            {% endif %}
+            {% if credential_assessment.medium_count > 0 %}
+            <div style="background:#1a1400; border:1px solid #443311; border-radius:8px; padding:10px 16px; flex:1; text-align:center;">
+                <div style="color:#ffcc00; font-size:1.4em; font-weight:bold;">{{ credential_assessment.medium_count }}</div>
+                <div style="color:#cc9900; font-size:0.75em; font-weight:bold;">MEDIUM</div>
+            </div>
+            {% endif %}
+            <div style="background:#0e0e0e; border:1px solid #1a1a1a; border-radius:8px; padding:10px 16px; flex:1; text-align:center;">
+                <div style="color:#555; font-size:1.4em; font-weight:bold;">{{ credential_assessment.total_devices_checked }}</div>
+                <div style="color:#333; font-size:0.75em; font-weight:bold;">DEVICES CHECKED</div>
+            </div>
+        </div>
+        {% endif %}
+
+        {# Findings — collapsible if there are any #}
+        {% if not credential_assessment.clean %}
+        <div style="background:#0e0e0e; border:1px solid #1a1a1a; border-radius:8px; overflow:hidden;">
+            <div class="device-group-header" onclick="toggleGroup(this)"
+                 style="padding:12px 16px; display:flex; align-items:center; gap:10px; background:#111; border:1px solid #1e1e1e; border-radius:8px; cursor:pointer; user-select:none;">
+                <span>🔐</span>
+                <span style="color:#e0e0e0; font-weight:bold; font-size:0.9em; flex:1;">Findings</span>
+                <span style="background:#2a0000; color:#ff4444; border:1px solid #441111; border-radius:10px; padding:2px 10px; font-size:0.78em; font-weight:bold;">
+                    {{ credential_assessment.findings|length }} finding(s)
+                </span>
+                <span class="group-chevron" style="color:#333; font-size:0.75em;">▼</span>
+            </div>
+            <div class="device-group-body" style="display:none; border:1px solid #1e1e1e; border-top:none; border-radius:0 0 8px 8px; background:#0c0c0c; overflow:hidden;">
+                {% for finding in credential_assessment.findings %}
+                <div style="padding:12px 16px; border-bottom:1px solid #141414;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <span style="font-family:monospace; color:#7fd8ff; font-size:0.85em;">{{ finding.ip }}</span>
+                            <span style="color:#555; font-size:0.8em;">Port {{ finding.port }}</span>
+                            <span style="color:#888; font-size:0.8em;">{{ finding.service }}</span>
+                        </div>
+                        <span style="
+                            {% if finding.risk == 'CRITICAL' %}background:#2a0000; color:#ff4444; border:1px solid #441111;
+                            {% elif finding.risk == 'HIGH' %}background:#1a0800; color:#ff8800; border:1px solid #442211;
+                            {% else %}background:#1a1400; color:#ffcc00; border:1px solid #443311;{% endif %}
+                            border-radius:10px; padding:2px 8px; font-size:0.72em; font-weight:bold;">
+                            {{ finding.risk }}
+                        </span>
+                    </div>
+                    <div style="color:#666; font-size:0.78em; line-height:1.5; margin-bottom:6px;">
+                        {{ finding.description }}
+                    </div>
+                    <div style="background:#0a0a0a; border:1px solid #1a1a1a; border-radius:6px; padding:8px 12px;">
+                        <span style="color:#44cc77; font-size:0.72em; font-weight:bold;">FIX: </span>
+                        <span style="color:#444; font-size:0.75em; line-height:1.5;">{{ finding.fix }}</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% else %}
+        <div style="background:#0e0e0e; border:1px solid #1a1a1a; border-radius:8px; padding:12px 16px;">
+            <span style="color:#333; font-size:0.82em;">
+                I checked {{ credential_assessment.total_devices_checked }} device(s) — no insecure protocols, default credentials, or exposed admin services found.
+            </span>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
     <h2>🤖 Recon AI Says</h2>
     {% if ai_analysis %}
     <div class="ai-box">{{ ai_analysis | safe }}</div>

@@ -203,6 +203,28 @@
                     <div class="tool-desc">I check your open ports against known vulnerabilities and rate the risk</div>
                 </label>
             </div>
+            <div class="tool-card" id="card_system_inspector" onclick="toggleTool('system_inspector', this)">
+                <input type="checkbox" name="tools" value="system_inspector" id="system_inspector">
+                <label for="system_inspector">
+                    <div class="tool-name">🔍 System Inspector</div>
+                    <div class="tool-desc">I look inside your machine — processes, startup items, and recent system changes</div>
+                </label>
+            </div>
+            <div class="tool-card"
+            id="card_credential_scanner"
+            onclick="toggleTool('credential_scanner', this)">
+                <input type="checkbox"
+                name="tools"
+                value="credential_scanner"
+                id="credential_scanner">
+                <label for="credential_scanner">
+                    <div class="tool-name">🔐 Credential Scanner</div>
+                    <div class="tool-desc">
+                    I check your devices for weak passwords, default credentials,
+                    and insecure protocols like Telnet and FTP
+                    </div>
+                </label>
+            </div>
             <div class="tool-card" id="card_ai_analysis" style="grid-column: span 2; cursor:default;">
                 <input type="checkbox" name="tools" value="ai_analysis" id="ai_analysis" style="display:none;">
                 <div class="tool-name" style="margin-bottom:10px;">🤖 AI Analysis</div>

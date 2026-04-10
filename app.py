@@ -19,6 +19,8 @@ from scan_memory import (
     get_new_devices, init_db
 )
 from device_fingerprint import fingerprint_device
+from system_inspector import run_system_inspection
+from credential_scanner import run_credential_assessment
 from dotenv import load_dotenv
 import datetime
 import logging
@@ -287,6 +289,30 @@ def scan():
             logger.error(f"Vulnerability analysis failed: {e}")
             report_data["vulnerabilities"] = []
 
+    # System Inspector
+    system_inspection = None
+    if "system_inspector" in tools:
+        try:
+            system_inspection = run_system_inspection()
+        except Exception as e:
+            logger.error(f"System inspection failed: {e}")
+            system_inspection = None
+    report_data["system_inspection"] = system_inspection
+
+    # Credential Risk Assessment
+    credential_assessment = None
+    if "credential_scanner" in tools:
+        try:
+            live_hosts = report_data.get("live_hosts", [])
+            open_ports = report_data.get("open_ports", [])
+            credential_assessment = run_credential_assessment(
+                live_hosts, open_ports
+            )
+        except Exception as e:
+            logger.error(f"Credential assessment failed: {e}")
+            credential_assessment = None
+    report_data["credential_assessment"] = credential_assessment
+
     # Risk score
     score = calculate_risk_score(report_data)
     label, emoji = get_risk_label(score)
@@ -343,7 +369,9 @@ def scan():
         timestamp=timestamp,
         text_report=text_report,
         last_scan=last_scan,
-        new_devices=new_devices)
+        new_devices=new_devices,
+        system_inspection=system_inspection,
+        credential_assessment=credential_assessment)
 
 @app.route("/network-intel")
 def network_intel():

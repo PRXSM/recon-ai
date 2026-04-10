@@ -139,6 +139,8 @@ For enterprise users (hospitals, banks, government): Recon AI can run in fully o
 | **Phase 11** | NIST & OWASP Mapping — automatically correlates all scan findings to industry-standard cybersecurity frameworks | 📋 PLANNED |
 | **Phase 12** | Zero Trust Verification — implements Never Trust Always Verify protocols for home and small business networks | 📋 PLANNED |
 | **Phase 13** | Prompt Injection Hardening — built-in protections securing Recon AI's own AI layer from malicious manipulation | 📋 PLANNED |
+| **Phase 13b** | Multi-Agent AI Architecture — Sanitizer, Analyst, Explainer, Adversary, and Auditor agents working together to verify every scan result and prevent inter-agent manipulation | 📋 PLANNED |
+| **Phase 13c** | CrewAI Integration — connect the multi-agent framework to the existing scan pipeline; each scan runs through the full agent conversation before results reach the user | 📋 PLANNED |
 | **Phase 14** | App Complete Milestone — full audit, security hardening, prompt injection testing, professional code review | 📋 PLANNED |
 | **Phase 15** | UI Redesign — full interface overhaul by designated designer, single page dashboard, mobile responsive, purple/white color scheme | 📋 PLANNED |
 | **Phase 16** | Deploy Online — HTTPS, rate limiting, GDPR compliance, weekly digest email, plain English threat feed | 📋 PLANNED |
@@ -210,6 +212,24 @@ These are the features that transform Recon AI from a scanner into a guardian.
 - Alerts the user if a device or log entry appears to contain a prompt injection attempt: "I found something suspicious in this device's name — it looks like someone tried to trick my AI"
 - Tests the system's own prompts against known injection techniques before each release
 - Documents all hardening measures transparently so security researchers can verify them
+
+### Phase 13b — Multi-Agent AI Architecture
+- Five specialized agents replace the single-AI analysis layer
+- Sanitizer Agent: sits at the front door — strips prompt injection attempts from all network data before any other agent sees it
+- Analyst Agent: receives only sanitized data — focuses purely on security analysis with no knowledge of what was stripped
+- Explainer Agent: takes Analyst findings and rewrites them in plain English following Recon AI brand voice — first person, no jargon
+- Adversary Agent: challenges every finding — asks whether output could be the result of manipulation, overstatement, or error
+- Auditor Agent: watches the full agent conversation and flags anything that looks like one agent influencing another inappropriately
+- This architecture means Recon AI's own AI is supervised, checked, and audited in real time — the same standard it holds networks to
+- Built on CrewAI (Python) integrated with the existing Claude API setup
+
+### Phase 13c — CrewAI Integration
+- Connect the multi-agent crew to the existing scan pipeline in app.py
+- Every scan result passes through the full agent conversation before reaching the user
+- Agent conversation is logged locally for transparency — user can see how the analysis was reached
+- Adversary and Auditor findings surface as a confidence score on the final result
+- Premium feature in the business model — multi-agent analysis runs on Standard and Private modes, not Offline
+- Positions Recon AI as the only tool in its class whose AI layer is internally audited before output reaches the user
 
 ### Phase 14 — App Complete
 - Full security audit using hardening prompts
