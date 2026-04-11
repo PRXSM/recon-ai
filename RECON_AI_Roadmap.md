@@ -134,7 +134,7 @@ For enterprise users (hospitals, banks, government): Recon AI can run in fully o
 | **Phase 6** | The Guardian Update — scan memory, unknown device alerts, three AI mode selector (Standard/Private/Offline) | 🔨 NEXT |
 | **Phase 7** | Deep Scan Mode — full 65,535 port scanning with threading, Simple vs Deep scan profiles | 📋 PLANNED |
 | **Phase 8** | System Inspector — suspicious process detector, startup item analyzer, two scan profiles | 📋 PLANNED |
-| **Phase 9** | Credential Risk Assessment — flags weak authentication, missing MFA, password-only systems across discovered devices | 📋 PLANNED |
+| **Phase 9** | Credential Risk Assessment — flags weak authentication, missing MFA, password-only systems across discovered devices | ✅ COMPLETE |
 | **Phase 10** | Shadow AI Discovery — detects unauthorized or hidden AI tools running across the local network | 📋 PLANNED |
 | **Phase 11** | NIST & OWASP Mapping — automatically correlates all scan findings to industry-standard cybersecurity frameworks | 📋 PLANNED |
 | **Phase 12** | Zero Trust Verification — implements Never Trust Always Verify protocols for home and small business networks | 📋 PLANNED |
@@ -239,6 +239,7 @@ These are the features that transform Recon AI from a scanner into a guardian.
 - Bug fixes and edge case handling
 - AI analysis prompt handles sparse scans gracefully — when a user runs only one tool (e.g. Credential Scanner only), the AI currently improvises with generic advice instead of acknowledging what was scanned and confirming results cleanly. Fix requires: (1) build_scan_summary() in engine.py to include credential_assessment data, (2) AI prompt in ai_assistant.py to detect sparse summaries and respond appropriately — "I only ran X tool, here's what I found, run a full scan for a complete picture."
 - Documentation complete
+- Graphify knowledge graph installed — 452x token reduction per Claude Code session, graph auto-rebuilds on code changes, graphify-out/ gitignored
 
 ### Phase 15 — UI Redesign
 - Full interface overhaul by designated designer
