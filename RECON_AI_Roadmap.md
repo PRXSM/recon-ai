@@ -240,6 +240,10 @@ These are the features that transform Recon AI from a scanner into a guardian.
 - AI analysis prompt handles sparse scans gracefully — when a user runs only one tool (e.g. Credential Scanner only), the AI currently improvises with generic advice instead of acknowledging what was scanned and confirming results cleanly. Fix requires: (1) build_scan_summary() in engine.py to include credential_assessment data, (2) AI prompt in ai_assistant.py to detect sparse summaries and respond appropriately — "I only ran X tool, here's what I found, run a full scan for a complete picture."
 - Documentation complete
 - Graphify knowledge graph installed — 452x token reduction per Claude Code session, graph auto-rebuilds on code changes, graphify-out/ gitignored
+- Auto-detect local IP on page load and pre-fill the scan input field — user can override but shouldn't have to know their IP manually. Use socket.gethostbyname(socket.gethostname()) in app.py and pass as default_ip to index.html template.
+- Auto-detect IP: add a helper popup button next to the IP input field explaining how to find your IP manually — step by step for Windows, Mac, and Linux in plain English.
+- UX: Vulnerability findings section needs grouping by severity with collapsible sections. Show summary badge (X CRITICAL, X HIGH, X LOW) at top. Only CRITICAL and HIGH expanded by default. LOW and UNKNOWN collapsed behind a "Show all findings" toggle. Reduces visual overwhelm for non-technical users.
+- System Inspector process scanner needs Windows support — currently uses ps aux (Unix only). Windows path should use tasklist command instead. Cross-platform fix required.
 
 ### Phase 15 — UI Redesign
 - Full interface overhaul by designated designer
