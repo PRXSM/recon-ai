@@ -25,3 +25,9 @@ ARCHITECTURE.md
 
 # graphify knowledge graph — generated locally, not committed
 graphify-out/
+
+# Local utility files and infographics
+infographic.png
+recon_ai_infographic.png
+notebooklm_tool.py
+yt_research.py
