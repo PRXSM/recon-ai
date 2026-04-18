@@ -218,7 +218,9 @@ Build the brain/ folder, the .md file structure, and a Python script that reads 
 ### Jarvis Phase 2 — Voice Layer (1-2 weeks)
 ElevenLabs API for speech output. Whisper for speech input (already installed). Wake word detection — "Hey Jarvis." Basic voice conversation loop on MAJIN.
 
-### Jarvis Phase 3 — Memory Architecture (2-3 weeks)
+Wake word detection ("Hey Jarvis") is the hardest part of Phase 2. Use Picovoice Porcupine — runs entirely offline on MAJIN, no cloud calls, low CPU usage. Free tier available. github.com/Picovoice/porcupine
+
+### Jarvis Phase 3 — Memory Architecture (4-6 weeks — ChromaDB and Mem0 setup is more involved if you haven't built a vector DB pipeline before. Don't rush it.)
 Install ChromaDB locally. Build the memory pipeline. Implement Mem0 for intelligent memory management. Background compression runs nightly. Jarvis now remembers across sessions without reading everything every time.
 
 ### Jarvis Phase 4 — File Access and Knowledge Graph (2-3 weeks)
