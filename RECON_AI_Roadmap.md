@@ -141,6 +141,7 @@ For enterprise users (hospitals, banks, government): Recon AI can run in fully o
 | **Phase 13** | Prompt Injection Hardening — built-in protections securing Recon AI's own AI layer from malicious manipulation | 📋 PLANNED |
 | **Phase 13b** | Multi-Agent AI Architecture — Sanitizer, Analyst, Explainer, Adversary, and Auditor agents working together to verify every scan result and prevent inter-agent manipulation | 📋 PLANNED |
 | **Phase 13c** | CrewAI Integration — connect the multi-agent framework to the existing scan pipeline; each scan runs through the full agent conversation before results reach the user | 📋 PLANNED |
+| **Phase 13d** | MCP Server Integration — local MCP servers give the AI layer real-time tool access: live CVE lookups, scan history queries, automated PDF report generation, and local threat intelligence cross-referencing — all running on localhost with zero data leaving the machine | 📋 PLANNED |
 | **Phase 14** | App Complete Milestone — full audit, security hardening, prompt injection testing, professional code review | 📋 PLANNED |
 | **Phase 15** | UI Redesign — full interface overhaul by designated designer, single page dashboard, mobile responsive, purple/white color scheme | 📋 PLANNED |
 | **Phase 16** | Deploy Online — HTTPS, rate limiting, GDPR compliance, weekly digest email, plain English threat feed | 📋 PLANNED |
@@ -231,6 +232,24 @@ These are the features that transform Recon AI from a scanner into a guardian.
 - Premium feature in the business model — multi-agent analysis runs on Standard and Private modes, not Offline
 - Positions Recon AI as the only tool in its class whose AI layer is internally audited before output reaches the user
 
+### Phase 13d — MCP Server Integration
+
+MCP (Model Context Protocol) is an open standard by Anthropic that gives AI models structured access to external tools and data sources. Instead of Claude only knowing what is pasted into a prompt, MCP allows Claude to actively call tools, retrieve live data, and reason with real context during every scan analysis.
+
+For Recon AI, all MCP servers run exclusively on localhost — no data leaves the machine. This extends Private Mode into a full agentic security workflow.
+
+**MCP Servers planned for Recon AI:**
+
+- **Nmap MCP Server** — Claude triggers scans directly. User says "scan my network" and Recon AI handles the rest without the user manually running commands or pasting output.
+- **CVE Database MCP Server** — connects to the NVD (National Vulnerability Database) API. When Claude detects an open port or service version, it calls this tool live and pulls real CVEs into the report. Not just training data — actual current threat intelligence.
+- **Scan History MCP Server** — Claude queries the local scan database during every analysis. Enables temporal awareness: "Last month port 23 was closed — it is open now. That is new and worth investigating."
+- **Report Generator MCP Server** — after analysis completes, Claude calls this tool to automatically format and save a clean PDF report. Non-technical users get a professional document, not a chat response.
+- **Local Threat Intel MCP Server** — a locally stored list of known malicious IPs and signatures. Claude cross-references every scan result against it silently during analysis before the user sees output.
+
+**Privacy guarantee:** All MCP servers communicate exclusively over localhost. Combined with Private Mode (Ollama), this creates a fully air-gapped agentic security pipeline — scans run, tools are called, reports are generated, and threat intel is checked, all on the user's own hardware with zero external connections.
+
+**Why this matters for the north star user:** The school IT admin in rural Virginia does not just get a scan result anymore. They get a report that checked live CVEs, compared it to last week's scan, flagged two new devices, cross-referenced a known malicious IP, and saved a PDF — all automatically, all privately.
+
 ### Phase 14 — App Complete
 - Full security audit using hardening prompts
 - Prompt injection testing against all AI entry points
@@ -311,6 +330,7 @@ The cybersecurity tools market splits into two groups with a massive gap in betw
 | **HTML/CSS** | Frontend interface |
 | **Git/GitHub** | Version control at github.com/PRXSM/recon-ai |
 | **Virtual Environment (venv)** | Dependency isolation |
+| **MCP (Model Context Protocol)** | Agentic tool layer — gives Claude structured access to local tools: CVE database, scan history, report generator, and threat intel — all running on localhost |
 
 ---
 
