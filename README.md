@@ -49,13 +49,13 @@ Explore Network Intelligence — understand your interfaces, ARP table, active c
 
 ## What Makes This Different
 
-You could paste a security report into an ChatGPT or Claude and ask it to explain things. That works. But they can't ping your subnet. They can't open a socket and check what's actually running on your router right now. They can't read your local system logs.
+You could paste a security report into ChatGPT or Claude and ask it to explain things. That works. But they can't ping your subnet. They can't open a socket and check what's actually running on your router right now. They can't read your local system logs. They can't tell you if someone installed an AI tool on a device you didn't authorize.
 
 Recon AI runs locally on your machine — which means it has access to things no external tool ever could. The AI analysis is just the explanation layer on top of real local data that only you can collect.
 
 ---
 
-## The 5 Tools
+## The Tools
 
 | Tool | What It Does | Status |
 |---|---|---|
@@ -64,6 +64,10 @@ Recon AI runs locally on your machine — which means it has access to things no
 | **Log Analyzer** | Reads your system logs and flags 30+ threat patterns — brute force attempts, privilege escalation, ransomware indicators, crypto mining, and more. | ✅ Complete |
 | **Vulnerability Reporter** | Takes the open ports and cross-references them against known risks. Also factors in what the log analyzer found. | ✅ Complete |
 | **AI Security Assistant** | Sends your findings to Claude and gets back a plain-English breakdown — every finding gets EXPLAIN → RISK → FIX → VERIFY. | ✅ Complete |
+| **Network Intelligence** | Maps your interfaces, ARP table, active connections, and traceroute in plain English. | ✅ Complete |
+| **System Inspector** | Scans running processes and startup items for anything suspicious. Flags by exact name — no false positives. | ✅ Complete |
+| **Credential Risk Assessment** | Checks every discovered device for weak authentication, default credentials, and missing MFA. | ✅ Complete |
+| **Shadow AI Discovery** | Detects unauthorized or hidden AI tools running across your local network — by port, banner signature, and API fingerprint. | ✅ Complete |
 
 ---
 
@@ -72,10 +76,12 @@ Recon AI runs locally on your machine — which means it has access to things no
 - 🌐 **Runs in your browser** — Flask web interface, no command line needed
 - 📖 **Built-in assistant, no API key needed** — explains every finding offline, zero data sent anywhere
 - 🧠 **Optional AI analysis** — Claude gives a deeper, more personalized breakdown when you want it
+- 🔒 **Three AI modes** — Standard (Claude API), Private (local Ollama, zero data leaves your machine), Offline (built-in knowledge base, always free)
 - 📊 **Network health score** — a 0–100 score so you know at a glance how things look
 - 📄 **Downloadable reports** — every scan can be saved as a .txt file
-- 🔒 **Your IP never leaves your machine** — redacted before anything gets sent to Claude
+- 🛡️ **Your IP never leaves your machine** — redacted before anything gets sent to Claude
 - 🔗 **Cross-tool logic** — if the log analyzer finds brute force attempts and the port scanner finds SSH open, the vulnerability reporter escalates the severity automatically
+- 🤖 **Shadow AI Detection** — finds AI tools running on your network that you didn't authorize
 - 🖥️ **macOS, Windows, Linux** — runs on all three
 
 ---
@@ -84,9 +90,11 @@ Recon AI runs locally on your machine — which means it has access to things no
 
 | | |
 |---|---|
-| Python 3 | All 5 scanning tools |
+| Python 3 | All scanning tools |
 | Flask | Web interface |
 | Claude API | AI analysis (optional) |
+| Ollama | Local AI inference for Private Mode |
+| SQLite | Scan memory and device tracking |
 | python-dotenv | API key management |
 | Standard library | `socket`, `subprocess`, `re`, `ipaddress`, `platform`, `pathlib` |
 
@@ -133,6 +141,11 @@ recon-ai/
 ├── ai_assistant.py            # Claude API integration
 ├── plain_english.py           # Offline knowledge base for common port findings
 ├── network_intel.py           # Network Intelligence engine
+├── system_inspector.py        # Suspicious process and startup item scanner
+├── credential_scanner.py      # Credential risk assessment across discovered devices
+├── shadow_ai.py               # Shadow AI discovery — detects unauthorized AI tools
+├── scan_memory.py             # Local scan history and unknown device tracking
+├── device_fingerprint.py      # MAC vendor lookup and device identification
 ├── templates/
 │   ├── index.html             # Scan form
 │   ├── results.html           # Results display
@@ -162,28 +175,38 @@ Deductions: -2 per open port, up to -20 per critical vulnerability, up to -10 pe
 
 ---
 
-## Privacy
-
-- Your IP is never sent anywhere — redacted before any AI call is made
-- AI analysis is opt-in — there's a checkbox, it's off by default
-- The offline mode sends nothing at all
-- Everything runs locally — no accounts, no server, no data collection
-- Your API key lives in `.env` and never gets uploaded
-
----
-
 ## Where Things Stand
 
 | | | |
 |---|---|---|
-| ✅ | 5 core scanning tools | Done |
-| ✅ | Unified engine — risk scoring, OS detection, IP redaction | Done |
-| ✅ | Flask web interface — browser UI, AI opt-in, offline mode | Done |
-| ✅ | 30+ threat patterns, cross-tool correlation, downloadable reports | Done |
-| ✅ | Phase 5 — Network Intelligence — interfaces, ARP, netstat, traceroute, accordion UI, CIDR validation, AI analysis | Complete |
-| ✅ | Phase 6 — The Guardian Update — scan memory, unknown device alerts, three AI mode selector (Offline/Standard/Private), local Ollama integration | Complete |
-| ✅ | Phase 7 — Deep Scan Mode — full 65,535 port scanning with threading, device fingerprinting, MAC vendor lookup, grouped device UI with descriptions | Complete |
-| 🔨 | Phase 8 — System Inspector — suspicious process detector, startup item analyzer | Next |
+| ✅ | Phase 1 — 5 core scanning tools | Complete |
+| ✅ | Phase 2 — Unified engine, risk scoring, OS detection, IP redaction | Complete |
+| ✅ | Phase 3 — Flask web interface, browser UI, AI opt-in, offline mode | Complete |
+| ✅ | Phase 4 — 30+ threat patterns, cross-tool correlation, downloadable reports | Complete |
+| ✅ | Phase 5 — Network Intelligence, interfaces, ARP, netstat, traceroute | Complete |
+| ✅ | Phase 6 — Guardian Update, scan memory, unknown device alerts, three AI modes | Complete |
+| ✅ | Phase 7 — Deep Scan Mode, full 65,535 port scanning, device fingerprinting | Complete |
+| ✅ | Phase 8 — System Inspector, process scanner, startup item analyzer | Complete |
+| ✅ | Phase 9 — Credential Risk Assessment, default creds, missing MFA detection | Complete |
+| ✅ | Phase 10 — Shadow AI Discovery, unauthorized AI tool detection by port and banner | Complete |
+| 🔨 | Phase 11 — NIST & OWASP Mapping | Next |
+| 📋 | Phase 12 — Zero Trust Verification | Planned |
+| 📋 | Phase 13 — Prompt Injection Hardening | Planned |
+| 📋 | Phase 14 — App Complete Milestone | Planned |
+| 📋 | Phase 15 — UI Redesign | Planned |
+| 📋 | Phase 16 — Deploy Online | Planned |
+| 📋 | Phase 17 — Business Model | Planned |
+
+---
+
+## Privacy
+
+- Your IP is never sent anywhere — redacted before any AI call is made
+- AI analysis is opt-in — there's a checkbox, it's off by default
+- Private Mode sends nothing at all — local Ollama inference only
+- Offline Mode requires zero API calls and zero data sharing
+- Everything runs locally — no accounts, no server, no data collection
+- Your API key lives in `.env` and never gets uploaded
 
 ---
 
@@ -206,7 +229,5 @@ That's who every decision in this project is built around.
 ## Built By
 
 **Asama Azim** — IT & Cybersecurity | Network+ Certified | Security+ in progress
-
-Built over a few days as a self-directed learning project — networking, Python, Flask, and cybersecurity all learned from scratch and applied immediately. Still building.
 
 [GitHub](https://github.com/PRXSM) | [LinkedIn](https://linkedin.com/in/asama-azim-38a0b391)
