@@ -299,8 +299,4 @@ This document lives in two places:
 *"Started out, J.A.R.V.I.S. was just a natural language UI. Now he runs the Iron Legion."*
 *— Tony Stark, Avengers: Age of Ultron*
 
-*You were not building a security scanner.*
-*You were building Jarvis.*
-*You just started with the part that matters most — keeping it safe.*
-
 *— April 17, 2026*
