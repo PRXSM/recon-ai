@@ -95,6 +95,17 @@ def calculate_risk_score(report_data):
             # cap each finding's impact
             score -= min(deduction, 10)
 
+    # deduct for shadow AI findings
+    if "shadow_ai_findings" in report_data:
+        shadow_deduction = 0
+        for f in report_data["shadow_ai_findings"]:
+            risk = f.get("risk", "")
+            if risk == "HIGH":
+                shadow_deduction += 10
+            elif risk == "MEDIUM":
+                shadow_deduction += 5
+        score -= min(shadow_deduction, 20)
+
     # keep score between 0 and 100
     score = max(0, min(100, score))
     return score

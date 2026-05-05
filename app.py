@@ -21,6 +21,7 @@ from scan_memory import (
 from device_fingerprint import fingerprint_device
 from system_inspector import run_system_inspection
 from credential_scanner import run_credential_assessment
+from shadow_ai import run_shadow_ai_scan
 from dotenv import load_dotenv
 import datetime
 import logging
@@ -442,6 +443,47 @@ def download_report():
         as_attachment=True,
         download_name=f"recon_ai_report_{safe_ts}.txt"
     )
+
+@app.route("/shadow-ai-scan", methods=["POST"])
+def shadow_ai_scan():
+    ip = request.form.get("target", "").strip()
+    if not is_valid_ip(ip):
+        return render_template("index.html",
+            error="Invalid IP address. Please enter a valid IPv4 address.")
+
+    try:
+        live_hosts = scan_subnet(ip)
+    except Exception as e:
+        logger.error(f"Network scan failed: {e}")
+        live_hosts = []
+
+    devices = [h["ip"] if isinstance(h, dict) else h for h in live_hosts]
+
+    shadow_ai_results = None
+    try:
+        shadow_ai_results = run_shadow_ai_scan(devices)
+    except Exception as e:
+        logger.error(f"Shadow AI scan failed: {e}")
+        shadow_ai_results = None
+
+    report_data = {
+        "mode": "Shadow AI Scan",
+        "target": ip,
+        "live_hosts": live_hosts,
+        "shadow_ai_findings": shadow_ai_results["findings"] if shadow_ai_results else [],
+    }
+    score = calculate_risk_score(report_data)
+    label, emoji = get_risk_label(score)
+    report_data["score"] = score
+    report_data["score_label"] = label
+    report_data["score_emoji"] = emoji
+
+    timestamp = datetime.datetime.now().isoformat()
+    return render_template("shadow_ai.html",
+        report_data=report_data,
+        shadow_ai_results=shadow_ai_results,
+        timestamp=timestamp)
+
 
 # run
 if __name__ == "__main__":

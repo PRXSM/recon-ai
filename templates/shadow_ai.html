@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recon AI — Shadow AI Discovery</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #0a0a0a;
+            color: #e0e0e0;
+            max-width: 700px;
+            margin: 60px auto;
+            padding: 20px;
+        }
+        h1 { color: #00bfff; }
+        h2 { color: #00bfff; margin-top: 30px; }
+        p  { color: #aaaaaa; }
+        .score-box {
+            text-align: center;
+            padding: 30px;
+            border-radius: 10px;
+            margin: 20px 0;
+            background: #1a1a1a;
+            border: 1px solid #333;
+        }
+        .score-number {
+            font-size: 3em;
+            font-weight: bold;
+            color: #00bfff;
+        }
+        .score-label {
+            font-size: 1.2em;
+            margin-top: 5px;
+        }
+        .back-btn {
+            display: inline-block;
+            margin-top: 30px;
+            padding: 10px 20px;
+            background: #00bfff;
+            color: #000;
+            font-weight: bold;
+            border-radius: 5px;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>🕵️ Shadow AI Discovery</h1>
+    <p>Target: {{ report_data.target }} &nbsp;|&nbsp; Time: {{ timestamp }}</p>
+
+    {# Summary — most important thing the user sees #}
+    {% if shadow_ai_results %}
+        {% if shadow_ai_results.clean %}
+        <div style="background:#0d1a0d; border:1px solid #1a4a1a; border-radius:8px; padding:16px 20px; margin:20px 0;">
+            <span style="font-size:1.1em;">✅</span>
+            <span style="color:#44cc77; font-weight:bold; margin-left:8px;">No AI tools found.</span>
+            <p style="color:#555; font-size:0.88em; margin:8px 0 0;">{{ shadow_ai_results.summary }}</p>
+        </div>
+        {% else %}
+        <div style="background:#1a0a00; border:1px solid #cc6600; border-radius:8px; padding:16px 20px; margin:20px 0;">
+            <span style="font-size:1.1em;">⚠️</span>
+            <span style="color:#ff8800; font-weight:bold; margin-left:8px;">AI tools detected on your network.</span>
+            <p style="color:#888; font-size:0.88em; margin:8px 0 0;">{{ shadow_ai_results.summary }}</p>
+        </div>
+        {% endif %}
+    {% else %}
+    <div style="background:#1a1a1a; border:1px solid #333; border-radius:8px; padding:16px 20px; margin:20px 0;">
+        <span style="color:#555; font-size:0.88em;">I wasn't able to complete the scan. Check that the target subnet is reachable and try again.</span>
+    </div>
+    {% endif %}
+
+    {# Health Score #}
+    {% if report_data.score is defined %}
+    <div class="score-box">
+        <div class="score-number">{{ report_data.score }}/100</div>
+        <div class="score-label">{{ report_data.score_emoji }} Network Health — {{ report_data.score_label }}</div>
+        <p style="font-size:0.85em; margin-top:10px;">
+            This score reflects the security posture of your network based on AI tools found and their risk levels.
+        </p>
+    </div>
+    {% endif %}
+
+    {# Findings #}
+    {% if shadow_ai_results and not shadow_ai_results.clean %}
+    <h2>🤖 AI Tools Found</h2>
+    <p style="font-size:0.85em;">
+        I checked {{ shadow_ai_results.devices_scanned }} device(s) and found
+        {{ shadow_ai_results.total_found }} potential AI tool(s).
+        Confirmed means the tool responded and identified itself.
+        Unconfirmed means the port was open but I couldn't verify what's running there.
+    </p>
+
+    <div style="background:#0e0e0e; border:1px solid #1a1a1a; border-radius:8px; overflow:hidden;">
+        <div class="findings-header" onclick="toggleGroup(this)"
+             style="padding:12px 16px; display:flex; align-items:center; gap:10px;
+                    background:#111; border:1px solid #1e1e1e; border-radius:8px;
+                    cursor:pointer; user-select:none;">
+            <span>🤖</span>
+            <span style="color:#e0e0e0; font-weight:bold; font-size:0.9em; flex:1;">Findings</span>
+            <span style="background:#1a1000; color:#ff8800; border:1px solid #442211;
+                         border-radius:10px; padding:2px 10px; font-size:0.78em; font-weight:bold;">
+                {{ shadow_ai_results.total_found }} finding(s)
+            </span>
+            <span class="group-chevron" style="color:#333; font-size:0.75em;">▼</span>
+        </div>
+        <div class="findings-body" style="display:none; border:1px solid #1e1e1e;
+             border-top:none; border-radius:0 0 8px 8px; background:#0c0c0c; overflow:hidden;">
+            {% for finding in shadow_ai_results.findings %}
+            <div style="padding:14px 16px; border-bottom:1px solid #141414;
+                        {% if finding.risk == 'HIGH' %}border-left:4px solid #ff4444;
+                        {% elif finding.risk == 'MEDIUM' %}border-left:4px solid #ffaa00;
+                        {% endif %}">
+
+                {# Header row: IP, tool name + port, risk badge #}
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <span style="font-family:monospace; color:#7fd8ff; font-size:0.88em;">{{ finding.ip }}</span>
+                        <span style="color:#e0e0e0; font-weight:bold; font-size:0.88em;">{{ finding.name }}</span>
+                        <span style="background:#1a1a1a; border:1px solid #333; color:#555;
+                                     font-size:0.75em; padding:2px 8px; border-radius:4px;
+                                     font-family:monospace;">
+                            :{{ finding.port }}
+                        </span>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:6px;">
+                        {% if finding.confirmed %}
+                        <span style="background:#001a0a; color:#44cc77; border:1px solid #00cc44;
+                                     border-radius:10px; padding:2px 8px; font-size:0.72em; font-weight:bold;">
+                            ✓ Confirmed
+                        </span>
+                        {% endif %}
+                        <span style="
+                            {% if finding.risk == 'HIGH' %}background:#1a0800; color:#ff8844; border:1px solid #ff4444;
+                            {% elif finding.risk == 'MEDIUM' %}background:#2a1e00; color:#ffbb44; border:1px solid #ffaa00;
+                            {% else %}background:#1a1a1a; color:#888; border:1px solid #444;
+                            {% endif %}
+                            border-radius:10px; padding:2px 8px; font-size:0.72em; font-weight:bold;">
+                            {{ finding.risk }}
+                        </span>
+                    </div>
+                </div>
+
+                {# Description #}
+                <div style="color:#666; font-size:0.8em; line-height:1.5; margin-bottom:8px;">
+                    {{ finding.description }}
+                </div>
+
+                {# Ollama models — only if present and non-empty #}
+                {% if finding.ollama_models is defined and finding.ollama_models %}
+                <div style="background:#0a0f0a; border:1px solid #1a2a1a; border-radius:6px; padding:8px 12px;">
+                    <div style="color:#44cc77; font-size:0.72em; font-weight:bold; margin-bottom:4px;">
+                        MODELS LOADED
+                    </div>
+                    {% for model in finding.ollama_models %}
+                    <div style="font-family:monospace; color:#7fd8ff; font-size:0.8em; padding:2px 0;">
+                        {{ model }}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {# Clean state — no findings #}
+    {% if shadow_ai_results and shadow_ai_results.clean %}
+    <h2>🤖 AI Tools Checked</h2>
+    <div style="background:#0d1a0d; border:1px solid #1a4a1a; border-radius:8px; padding:14px 18px;">
+        <span style="color:#333; font-size:0.85em;">
+            I scanned {{ shadow_ai_results.devices_scanned }} device(s) across
+            {{ shadow_ai_results.devices_scanned }} address(es) — no AI tools found running on any of them.
+        </span>
+    </div>
+    {% endif %}
+
+    <a href="/" class="back-btn">← Back to Scanner</a>
+
+    <script>
+    function toggleGroup(header) {
+        const body = header.nextElementSibling;
+        const chevron = header.querySelector('.group-chevron');
+        const isOpen = body.style.display !== 'none';
+        body.style.display = isOpen ? 'none' : 'block';
+        chevron.style.transform = isOpen ? '' : 'rotate(180deg)';
+        header.style.background = isOpen ? '#111' : '#0d1a26';
+        header.style.borderColor = isOpen ? '#1e1e1e' : '#00bfff';
+        header.style.borderRadius = isOpen ? '8px' : '8px 8px 0 0';
+    }
+    </script>
+</body>
+</html>
