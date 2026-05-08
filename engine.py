@@ -65,7 +65,24 @@ def build_scan_summary(report_data):
             lines.append(
                 f"  [{f['risk']}] {f['description']} — detected {f['count']} times"
             )
+    if "credential_assessment" in report_data and report_data["credential_assessment"]:
+        ca = report_data["credential_assessment"]
+        lines.append(f"\nCredential Assessment: {ca.get('summary', '')}")
+        for f in ca.get("findings", []):
+            lines.append(
+                f"  [{f['risk']}] {f['service']} — {f['description']}"
+            )
 
+    if "system_inspection" in report_data and report_data["system_inspection"]:
+        si = report_data["system_inspection"]
+        lines.append(f"\nSystem Inspection: {si.get('summary', '')}")
+        flagged_processes = si.get("processes", {}).get("flagged", [])
+        for p in flagged_processes:
+            lines.append(f"  [HIGH] Suspicious process: {p['name']} — {p['description']}")
+        flagged_startup = si.get("startup", {}).get("flagged", [])
+        for s in flagged_startup:
+            lines.append(f"  [MEDIUM] Suspicious startup item: {s['name']}")
+            
     return "\n".join(lines)
 
 # calculate network risk score
