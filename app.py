@@ -203,6 +203,11 @@ def scan():
     ai_mode = request.form.get("ai_mode", "offline")
     needs_target = any(t in tools for t in ("port_scanner", "network_mapper", "vuln_reporter"))
 
+    authorized = request.form.get("authorized")
+    if not authorized:
+        return render_template("index.html",
+            error="You must confirm you have authorization to scan this network before proceeding.")
+
     # validate IP when a network tool is selected
     if needs_target and not is_valid_ip(ip):
         return render_template("index.html",
@@ -211,11 +216,6 @@ def scan():
     if not tools:
         return render_template("index.html",
             error="Please select at least one tool to run.")
-    
-    authorized = request.form.get("authorized")
-    if not authorized:
-        return render_template("index.html",
-        error="You must confirm you have authorization to scan this network before proceeding.")
 
     report_data = {
         "mode": "Custom Scan",
@@ -464,6 +464,11 @@ def download_report():
 
 @app.route("/shadow-ai-scan", methods=["POST"])
 def shadow_ai_scan():
+    authorized = request.form.get("authorized")
+    if not authorized:
+        return render_template("index.html",
+            error="You must confirm you have authorization to scan this network before proceeding.")
+
     ip = request.form.get("target", "").strip()
     if not is_valid_ip(ip):
         return render_template("index.html",

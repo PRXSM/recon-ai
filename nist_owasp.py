@@ -387,7 +387,7 @@ def generate_compliance_summary(findings):
     seen_owasp = {}
 
     for finding in findings:
-        for category in finding.get("nist_categories", []):
+        for category in set(finding.get("nist_categories", [])):
             if category in nist_counts:
                 nist_counts[category] += 1
 
