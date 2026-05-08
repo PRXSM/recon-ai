@@ -6,6 +6,7 @@ from network_mapper import scan_subnet
 from log_analyzer import find_log_files, analyze_log, group_findings
 from vulnerability_reporter import analyze_ports
 from ai_assistant import analyze_with_ai
+from nist_owasp import map_findings, generate_compliance_summary
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -106,6 +107,13 @@ def calculate_risk_score(report_data):
                 shadow_deduction += 5
         score -= min(shadow_deduction, 20)
 
+    # deduct for NIST Respond/Detect findings
+    if "compliance" in report_data:
+        nist_counts = report_data["compliance"].get("nist_counts", {})
+        nist_deduction = nist_counts.get("Respond", 0) * 10
+        nist_deduction += nist_counts.get("Detect", 0) * 5
+        score -= min(nist_deduction, 15)
+
     # keep score between 0 and 100
     score = max(0, min(100, score))
     return score
@@ -173,6 +181,12 @@ def run_engine():
         for lf in log_files:
             raw.extend(analyze_log(lf))
         report_data = {"mode": "Log Analysis", "log_findings": group_findings(raw)}
+
+    all_findings = report_data.get("vulnerabilities", []) + report_data.get("log_findings", [])
+    if all_findings:
+        mapped = map_findings(all_findings)
+        report_data["mapped_findings"] = mapped
+        report_data["compliance"] = generate_compliance_summary(mapped)
 
     return report_data, timestamp
 
