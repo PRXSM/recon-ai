@@ -47,11 +47,6 @@ AI_PORTS = {
         "description": "A browser interface for running local AI models.",
         "risk": "MEDIUM",
     },
-    5000: {
-        "name": "Flask app",
-        "description": "A common web framework that can host AI tools.",
-        "risk": "MEDIUM",
-    },
     8080: {
         "name": "Common AI web interface port",
         "description": "A common port used by various AI web interfaces.",
@@ -174,6 +169,10 @@ def scan_device(ip):
     For each open port, attempts a banner grab to confirm the AI tool.
     Returns a list of finding dicts — one per detected AI tool.
     """
+    # Never scan localhost — Recon AI runs here and would flag itself
+    if ip in ("127.0.0.1", "::1", "localhost"):
+        return []
+    
     findings = []
 
     for port, info in AI_PORTS.items():
