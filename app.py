@@ -211,6 +211,11 @@ def scan():
     if not tools:
         return render_template("index.html",
             error="Please select at least one tool to run.")
+    
+    authorized = request.form.get("authorized")
+    if not authorized:
+        return render_template("index.html",
+        error="You must confirm you have authorization to scan this network before proceeding.")
 
     report_data = {
         "mode": "Custom Scan",
