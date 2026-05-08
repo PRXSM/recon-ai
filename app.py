@@ -22,6 +22,7 @@ from device_fingerprint import fingerprint_device
 from system_inspector import run_system_inspection
 from credential_scanner import run_credential_assessment
 from shadow_ai import run_shadow_ai_scan
+from nist_owasp import map_findings, generate_compliance_summary
 from dotenv import load_dotenv
 import datetime
 import logging
@@ -314,6 +315,16 @@ def scan():
             credential_assessment = None
     report_data["credential_assessment"] = credential_assessment
 
+    # Compliance mapping
+    all_findings = (
+        report_data.get("vulnerabilities", []) +
+        report_data.get("log_findings", [])
+    )
+    if all_findings:
+        mapped = map_findings(all_findings)
+        report_data["mapped_findings"] = mapped
+        report_data["compliance"] = generate_compliance_summary(mapped)
+
     # Risk score
     score = calculate_risk_score(report_data)
     label, emoji = get_risk_label(score)
@@ -372,7 +383,9 @@ def scan():
         last_scan=last_scan,
         new_devices=new_devices,
         system_inspection=system_inspection,
-        credential_assessment=credential_assessment)
+        credential_assessment=credential_assessment,
+        mapped_findings=report_data.get("mapped_findings", []),
+        compliance=report_data.get("compliance"))
 
 @app.route("/network-intel")
 def network_intel():

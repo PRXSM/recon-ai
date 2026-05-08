@@ -673,6 +673,186 @@
     </div>
     {% endif %}
 
+    {% if compliance %}
+    <div style="margin-bottom:28px;">
+        <h2>🛡️ Compliance Mapping</h2>
+
+        {# Summary paragraph #}
+        <div style="background:#0e0e1a; border:1px solid #1a1a3a; border-radius:8px; padding:14px 18px; margin-bottom:16px;">
+            <span style="color:#aaa; font-size:0.9em; line-height:1.6;">{{ compliance.summary }}</span>
+        </div>
+
+        {# NIST breakdown — collapsible rows per category #}
+        {% if compliance.nist_counts.Respond > 0 or compliance.nist_counts.Detect > 0 or compliance.nist_counts.Protect > 0 or compliance.nist_counts.Identify > 0 or compliance.nist_counts.Recover > 0 %}
+        <div style="font-size:0.72em; text-transform:uppercase; letter-spacing:0.06em; color:#333; margin-bottom:8px;">NIST Framework</div>
+
+        {% if compliance.nist_counts.Respond > 0 %}
+        <div style="margin-bottom:8px;">
+            <div class="device-group-header" onclick="toggleGroup(this)"
+                 style="display:flex; align-items:center; gap:10px; padding:12px 16px;
+                        background:#111; border:1px solid #1e1e1e; border-radius:8px;
+                        cursor:pointer; user-select:none;">
+                <span style="width:10px; height:10px; border-radius:50%; background:#ff4444; flex-shrink:0;"></span>
+                <span style="color:#ff4444; font-weight:bold; font-size:0.9em; flex:1;">Respond</span>
+                <span style="background:#2a0000; color:#ff4444; border:1px solid #441111;
+                             border-radius:10px; padding:2px 10px; font-size:0.78em; font-weight:bold;">
+                    {{ compliance.nist_counts.Respond }}
+                </span>
+                <span class="group-chevron" style="color:#333; font-size:0.75em;">▼</span>
+            </div>
+            <div class="device-group-body" style="display:none; border:1px solid #1e1e1e;
+                 border-top:none; border-radius:0 0 8px 8px; background:#0c0c0c; overflow:hidden;">
+                {% for f in mapped_findings if "Respond" in f.nist_categories %}
+                <div style="padding:10px 16px; border-bottom:1px solid #141414;">
+                    <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+                        {% if f.port %}<span style="font-family:monospace; color:#7fd8ff; font-size:0.82em;">Port {{ f.port }}</span>{% endif %}
+                        <span style="color:#e0e0e0; font-size:0.85em; font-weight:bold;">{{ f.service or f.description or "Finding" }}</span>
+                    </div>
+                    {% if f.nist_explanation %}<div style="color:#555; font-size:0.78em; line-height:1.5;">{{ f.nist_explanation }}</div>{% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% if compliance.nist_counts.Detect > 0 %}
+        <div style="margin-bottom:8px;">
+            <div class="device-group-header" onclick="toggleGroup(this)"
+                 style="display:flex; align-items:center; gap:10px; padding:12px 16px;
+                        background:#111; border:1px solid #1e1e1e; border-radius:8px;
+                        cursor:pointer; user-select:none;">
+                <span style="width:10px; height:10px; border-radius:50%; background:#ff8800; flex-shrink:0;"></span>
+                <span style="color:#ff8800; font-weight:bold; font-size:0.9em; flex:1;">Detect</span>
+                <span style="background:#1a0d00; color:#ff8800; border:1px solid #442200;
+                             border-radius:10px; padding:2px 10px; font-size:0.78em; font-weight:bold;">
+                    {{ compliance.nist_counts.Detect }}
+                </span>
+                <span class="group-chevron" style="color:#333; font-size:0.75em;">▼</span>
+            </div>
+            <div class="device-group-body" style="display:none; border:1px solid #1e1e1e;
+                 border-top:none; border-radius:0 0 8px 8px; background:#0c0c0c; overflow:hidden;">
+                {% for f in mapped_findings if "Detect" in f.nist_categories %}
+                <div style="padding:10px 16px; border-bottom:1px solid #141414;">
+                    <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+                        {% if f.port %}<span style="font-family:monospace; color:#7fd8ff; font-size:0.82em;">Port {{ f.port }}</span>{% endif %}
+                        <span style="color:#e0e0e0; font-size:0.85em; font-weight:bold;">{{ f.service or f.description or "Finding" }}</span>
+                    </div>
+                    {% if f.nist_explanation %}<div style="color:#555; font-size:0.78em; line-height:1.5;">{{ f.nist_explanation }}</div>{% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% if compliance.nist_counts.Protect > 0 %}
+        <div style="margin-bottom:8px;">
+            <div class="device-group-header" onclick="toggleGroup(this)"
+                 style="display:flex; align-items:center; gap:10px; padding:12px 16px;
+                        background:#111; border:1px solid #1e1e1e; border-radius:8px;
+                        cursor:pointer; user-select:none;">
+                <span style="width:10px; height:10px; border-radius:50%; background:#ffcc00; flex-shrink:0;"></span>
+                <span style="color:#ffcc00; font-weight:bold; font-size:0.9em; flex:1;">Protect</span>
+                <span style="background:#1a1a00; color:#ffcc00; border:1px solid #443300;
+                             border-radius:10px; padding:2px 10px; font-size:0.78em; font-weight:bold;">
+                    {{ compliance.nist_counts.Protect }}
+                </span>
+                <span class="group-chevron" style="color:#333; font-size:0.75em;">▼</span>
+            </div>
+            <div class="device-group-body" style="display:none; border:1px solid #1e1e1e;
+                 border-top:none; border-radius:0 0 8px 8px; background:#0c0c0c; overflow:hidden;">
+                {% for f in mapped_findings if "Protect" in f.nist_categories %}
+                <div style="padding:10px 16px; border-bottom:1px solid #141414;">
+                    <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+                        {% if f.port %}<span style="font-family:monospace; color:#7fd8ff; font-size:0.82em;">Port {{ f.port }}</span>{% endif %}
+                        <span style="color:#e0e0e0; font-size:0.85em; font-weight:bold;">{{ f.service or f.description or "Finding" }}</span>
+                    </div>
+                    {% if f.nist_explanation %}<div style="color:#555; font-size:0.78em; line-height:1.5;">{{ f.nist_explanation }}</div>{% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% if compliance.nist_counts.Identify > 0 %}
+        <div style="margin-bottom:8px;">
+            <div class="device-group-header" onclick="toggleGroup(this)"
+                 style="display:flex; align-items:center; gap:10px; padding:12px 16px;
+                        background:#111; border:1px solid #1e1e1e; border-radius:8px;
+                        cursor:pointer; user-select:none;">
+                <span style="width:10px; height:10px; border-radius:50%; background:#00bfff; flex-shrink:0;"></span>
+                <span style="color:#00bfff; font-weight:bold; font-size:0.9em; flex:1;">Identify</span>
+                <span style="background:#00152a; color:#00bfff; border:1px solid #003366;
+                             border-radius:10px; padding:2px 10px; font-size:0.78em; font-weight:bold;">
+                    {{ compliance.nist_counts.Identify }}
+                </span>
+                <span class="group-chevron" style="color:#333; font-size:0.75em;">▼</span>
+            </div>
+            <div class="device-group-body" style="display:none; border:1px solid #1e1e1e;
+                 border-top:none; border-radius:0 0 8px 8px; background:#0c0c0c; overflow:hidden;">
+                {% for f in mapped_findings if "Identify" in f.nist_categories %}
+                <div style="padding:10px 16px; border-bottom:1px solid #141414;">
+                    <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+                        {% if f.port %}<span style="font-family:monospace; color:#7fd8ff; font-size:0.82em;">Port {{ f.port }}</span>{% endif %}
+                        <span style="color:#e0e0e0; font-size:0.85em; font-weight:bold;">{{ f.service or f.description or "Finding" }}</span>
+                    </div>
+                    {% if f.nist_explanation %}<div style="color:#555; font-size:0.78em; line-height:1.5;">{{ f.nist_explanation }}</div>{% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% if compliance.nist_counts.Recover > 0 %}
+        <div style="margin-bottom:16px;">
+            <div class="device-group-header" onclick="toggleGroup(this)"
+                 style="display:flex; align-items:center; gap:10px; padding:12px 16px;
+                        background:#111; border:1px solid #1e1e1e; border-radius:8px;
+                        cursor:pointer; user-select:none;">
+                <span style="width:10px; height:10px; border-radius:50%; background:#44cc77; flex-shrink:0;"></span>
+                <span style="color:#44cc77; font-weight:bold; font-size:0.9em; flex:1;">Recover</span>
+                <span style="background:#001a0a; color:#44cc77; border:1px solid #114422;
+                             border-radius:10px; padding:2px 10px; font-size:0.78em; font-weight:bold;">
+                    {{ compliance.nist_counts.Recover }}
+                </span>
+                <span class="group-chevron" style="color:#333; font-size:0.75em;">▼</span>
+            </div>
+            <div class="device-group-body" style="display:none; border:1px solid #1e1e1e;
+                 border-top:none; border-radius:0 0 8px 8px; background:#0c0c0c; overflow:hidden;">
+                {% for f in mapped_findings if "Recover" in f.nist_categories %}
+                <div style="padding:10px 16px; border-bottom:1px solid #141414;">
+                    <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+                        {% if f.port %}<span style="font-family:monospace; color:#7fd8ff; font-size:0.82em;">Port {{ f.port }}</span>{% endif %}
+                        <span style="color:#e0e0e0; font-size:0.85em; font-weight:bold;">{{ f.service or f.description or "Finding" }}</span>
+                    </div>
+                    {% if f.nist_explanation %}<div style="color:#555; font-size:0.78em; line-height:1.5;">{{ f.nist_explanation }}</div>{% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% endif %}
+
+        {# OWASP entries #}
+        {% if compliance.owasp_entries %}
+        <div style="background:#0e0e0e; border:1px solid #1a1a1a; border-radius:8px; overflow:hidden;">
+            <div style="padding:12px 16px; border-bottom:1px solid #1a1a1a; display:flex; align-items:center; gap:10px;">
+                <span style="color:#e0e0e0; font-weight:bold; font-size:0.9em; flex:1;">OWASP Top 10</span>
+                <span style="background:#1a1a2a; color:#00bfff; border:1px solid #2a2a4a; border-radius:10px; padding:2px 10px; font-size:0.78em; font-weight:bold;">
+                    {{ compliance.owasp_entries | length }} matched
+                </span>
+            </div>
+            {% for entry in compliance.owasp_entries %}
+            <div style="padding:10px 16px; border-bottom:1px solid #141414; display:flex; align-items:center; gap:12px;">
+                <span style="background:#1a1a2a; color:#00bfff; border:1px solid #2a2a4a; border-radius:4px; padding:2px 8px; font-family:monospace; font-size:0.82em; font-weight:bold; white-space:nowrap;">{{ entry.id }}</span>
+                <span style="color:#888; font-size:0.85em;">{{ entry.name }}</span>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
     <h2>🤖 Recon AI Says</h2>
     {% if ai_analysis %}
     <div class="ai-box">{{ ai_analysis | safe }}</div>

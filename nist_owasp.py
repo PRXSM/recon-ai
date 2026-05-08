@@ -313,7 +313,7 @@ FINDING_TYPE_MAPPINGS = {
 }
 
 _DEFAULT_MAPPING = {
-    "nist_categories": ["Identify"],
+    "nist_categories": [],
     "nist_explanation": (
         "I found something on your network that I haven't seen before. "
         "The first step is always to understand what it is."
@@ -408,40 +408,84 @@ def generate_compliance_summary(findings):
             "pass the results through here for compliance context."
         )
     else:
-        active_nist = [k for k, v in nist_counts.items() if v > 0]
-        nist_str = ", ".join(active_nist) if active_nist else "none"
-        owasp_str = (
-            ", ".join(f"{e['id']} ({e['name']})" for e in owasp_entries)
-            if owasp_entries else "none"
+        def _label(f):
+            port    = f.get("port")
+            service = f.get("service", "") or ""
+            desc    = f.get("description", "") or ""
+            if port and service:
+                return f"Port {port} ({service})"
+            if port:
+                return f"Port {port}"
+            words = desc.split()
+            return " ".join(words[:4]) if len(words) > 4 else desc or "an unknown finding"
+
+        _priority = ["Respond", "Detect", "Protect", "Identify", "Recover"]
+
+        def _rank(f):
+            cats = f.get("nist_categories") or []
+            for i, cat in enumerate(_priority):
+                if cat in cats:
+                    return i
+            return 99
+
+        sorted_f = sorted(findings, key=_rank)
+        named    = sorted_f[:3]
+        rest     = total - len(named)
+
+        labels = [_label(f) for f in named]
+        if len(labels) == 1:
+            name_str = labels[0]
+        elif len(labels) == 2:
+            name_str = f"{labels[0]} and {labels[1]}"
+        else:
+            name_str = f"{labels[0]}, {labels[1]}, and {labels[2]}"
+
+        extra = (
+            f" and {rest} other{'s' if rest != 1 else ''}"
+            if rest > 0 else ""
         )
 
         respond_count = nist_counts["Respond"]
-        protect_count = nist_counts["Protect"]
         detect_count  = nist_counts["Detect"]
+        protect_count = nist_counts["Protect"]
+        active_cats   = [k for k, v in nist_counts.items() if v > 0]
 
         if respond_count > 0:
-            lead = (
-                f"I found {respond_count} finding(s) in the Respond category — "
-                "these indicate active or recent security events that need immediate attention. "
+            summary = (
+                f"I found {name_str}{extra} on your network — "
+                f"{'this falls' if respond_count == 1 else 'some of these fall'} "
+                f"under Respond, which means "
+                f"{'it needs' if respond_count == 1 else 'they need'} "
+                f"your attention now, not later."
             )
-        elif protect_count > 0:
-            lead = (
-                f"Most of what I found ({protect_count} finding(s)) falls under Protect — "
-                "gaps in your defenses that haven't been exploited yet, but need to be closed. "
-            )
+            others = [c for c in active_cats if c != "Respond"]
+            if others:
+                summary += (
+                    f" I also found things worth reviewing "
+                    f"under {' and '.join(others)}."
+                )
         elif detect_count > 0:
-            lead = (
-                f"I found {detect_count} finding(s) in the Detect category — "
-                "anomalies that need investigation to rule out active compromise. "
+            summary = (
+                f"I found {name_str}{extra} worth looking at — "
+                f"{'this is flagged' if detect_count == 1 else 'some are flagged'} "
+                f"under Detect, meaning something on your network doesn't look "
+                f"right and should be checked."
             )
+            others = [c for c in active_cats if c != "Detect"]
+            if others:
+                summary += f" I also flagged things under {' and '.join(others)}."
+        elif protect_count > 0:
+            summary = (
+                f"I found {name_str}{extra} on your network. "
+                f"{'This is a gap' if protect_count == 1 else 'These are gaps'} "
+                f"in your defenses that haven't been exploited yet — "
+                f"but should be closed."
+            )
+            others = [c for c in active_cats if c != "Protect"]
+            if others:
+                summary += f" I also found things under {' and '.join(others)}."
         else:
-            lead = f"I mapped {total} finding(s) to NIST and OWASP frameworks. "
-
-        summary = (
-            f"{lead}"
-            f"NIST functions covered: {nist_str}. "
-            f"OWASP Top 10 entries referenced: {owasp_str}."
-        )
+            summary = f"I found {name_str}{extra} worth reviewing."
 
     logger.info(
         f"Compliance summary: {total} finding(s), "
