@@ -89,48 +89,87 @@ SENSITIVE_PATHS = [
 
 def scan_processes():
     """
-    Run 'ps aux', parse every running process, and flag anything
-    that matches SUSPICIOUS_PROCESSES by name or command.
+    Scan running processes and flag anything matching SUSPICIOUS_PROCESSES.
+    Uses 'ps aux' on macOS/Linux and 'tasklist /FO CSV' on Windows.
+    Exact binary name matching only — no partial matching.
     Returns flagged processes plus total count.
     """
     flagged = []
     total_scanned = 0
+    is_windows = platform.system().lower() == "windows"
 
     try:
-        result = subprocess.run(
-            ["ps", "aux"],
-            capture_output=True,
-            text=True,
-            timeout=10
-        )
-        lines = result.stdout.strip().splitlines()
-        # Skip header line
-        for line in lines[1:]:
-            total_scanned += 1
-            parts = line.split(None, 10)
-            if len(parts) < 11:
-                continue
-            pid = parts[1]
-            command = parts[10].strip()
-            binary = command.split()[0] if command else ""
-            binary_name = os.path.basename(binary).lower()
+        if is_windows:
+            result = subprocess.run(
+                ["tasklist", "/FO", "CSV"],
+                capture_output=True,
+                text=True,
+                timeout=10
+            )
+            lines = result.stdout.strip().splitlines()
+            # Skip header line
+            for line in lines[1:]:
+                total_scanned += 1
+                # CSV format: "Image Name","PID","Session Name","Session#","Mem Usage"
+                parts = [p.strip('"') for p in line.split('","')]
+                if len(parts) < 2:
+                    continue
+                binary_name = parts[0].lower()
+                # Strip .exe suffix for matching
+                if binary_name.endswith(".exe"):
+                    binary_name = binary_name[:-4]
+                pid = parts[1]
 
-            for suspect in SUSPICIOUS_PROCESSES:
-                s = suspect.lower()
-                if binary_name == s:
-                    description = SUSPICIOUS_PROCESS_DESCRIPTIONS.get(
-                        suspect.lower(),
-                        f"'{suspect}' was found in a running process. This may warrant investigation."
-                    )
-                    flagged.append({
-                        "name": binary_name,
-                        "pid": pid,
-                        "command": command[:200],
-                        "risk": "HIGH",
-                        "description": description,
-                        "severity": "HIGH",
-                    })
-                    break  # one flag per process is enough
+                for suspect in SUSPICIOUS_PROCESSES:
+                    if binary_name == suspect.lower():
+                        description = SUSPICIOUS_PROCESS_DESCRIPTIONS.get(
+                            suspect.lower(),
+                            f"'{suspect}' was found in a running process. This may warrant investigation."
+                        )
+                        flagged.append({
+                            "name": binary_name,
+                            "pid": pid,
+                            "command": binary_name,
+                            "risk": "HIGH",
+                            "description": description,
+                            "severity": "HIGH",
+                        })
+                        break
+
+        else:
+            result = subprocess.run(
+                ["ps", "aux"],
+                capture_output=True,
+                text=True,
+                timeout=10
+            )
+            lines = result.stdout.strip().splitlines()
+            # Skip header line
+            for line in lines[1:]:
+                total_scanned += 1
+                parts = line.split(None, 10)
+                if len(parts) < 11:
+                    continue
+                pid = parts[1]
+                command = parts[10].strip()
+                binary = command.split()[0] if command else ""
+                binary_name = os.path.basename(binary).lower()
+
+                for suspect in SUSPICIOUS_PROCESSES:
+                    if binary_name == suspect.lower():
+                        description = SUSPICIOUS_PROCESS_DESCRIPTIONS.get(
+                            suspect.lower(),
+                            f"'{suspect}' was found in a running process. This may warrant investigation."
+                        )
+                        flagged.append({
+                            "name": binary_name,
+                            "pid": pid,
+                            "command": command[:200],
+                            "risk": "HIGH",
+                            "description": description,
+                            "severity": "HIGH",
+                        })
+                        break
 
     except Exception as e:
         logger.error(f"Process scan failed: {e}")
