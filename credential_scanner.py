@@ -606,7 +606,10 @@ def check_insecure_protocols(ip, open_ports):
 def check_default_credentials(ip, open_ports):
     """
     Attempt HTTP basic auth on port 80 or 8080 using DEFAULT_CREDENTIALS.
-    Reports if any default credential is accepted. Never logs the credential.
+    Makes real login attempts — read-only, discards all results immediately.
+    Reports only whether a default credential was accepted. Never stores,
+    logs, or transmits any credential. Runs only on networks the user has
+    confirmed they own via the authorization checkbox.
     Returns a list of finding dicts.
     """
     if not REQUESTS_AVAILABLE:
