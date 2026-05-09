@@ -7,6 +7,7 @@ from log_analyzer import find_log_files, analyze_log, group_findings
 from vulnerability_reporter import analyze_ports
 from ai_assistant import analyze_with_ai
 from nist_owasp import map_findings, generate_compliance_summary
+from prompt_injection import sanitize, sanitize_list
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -33,6 +34,7 @@ def show_menu():
 
 # build summary for AI — IP always redacted for privacy
 def build_scan_summary(report_data):
+    injection_findings = []
     lines = []
     lines.append(f"Scan Mode: {report_data.get('mode', 'Unknown')}")
     lines.append(f"Operating System: {platform.system()} {platform.release()}")
@@ -47,30 +49,70 @@ def build_scan_summary(report_data):
             lines.append(f"  - [HOST {i} REDACTED]")
 
     if "open_ports" in report_data:
+        raw_ports = report_data.get("open_ports", [])
+        clean_ports, port_findings = sanitize_list(
+            raw_ports, field_name="open_port", source="port_scanner"
+        )
+        injection_findings.extend(port_findings)
         lines.append(f"\nOpen Ports:")
-        for port in report_data["open_ports"]:
+        for port in clean_ports:
             lines.append(f"  {port}")
 
     if "vulnerabilities" in report_data:
         lines.append(f"\nVulnerabilities:")
         for v in report_data["vulnerabilities"]:
+            clean_service, sf = sanitize(
+                v.get("service", ""),
+                field_name="service",
+                source="vuln_reporter"
+            )
+            clean_desc, df = sanitize(
+                v.get("description", ""),
+                field_name="description",
+                source="vuln_reporter"
+            )
+            if sf: injection_findings.append(sf)
+            if df: injection_findings.append(df)
             lines.append(
-                f"  [{v['severity']}] Port {v['port']} - {v['service']}: {v['description']}"
+                f"  [{v['severity']}] Port {v['port']} - "
+                f"{clean_service}: {clean_desc}"
             )
 
     if "log_findings" in report_data:
-        # grouped findings — send summary not raw list
-        lines.append(f"\nLog Findings: {len(report_data['log_findings'])} unique threat types detected")
+        lines.append(
+            f"\nLog Findings: {len(report_data['log_findings'])} "
+            f"unique threat types detected"
+        )
         for f in report_data["log_findings"]:
-            lines.append(
-                f"  [{f['risk']}] {f['description']} — detected {f['count']} times"
+            clean_desc, df = sanitize(
+                f.get("description", ""),
+                field_name="log_description",
+                source="log_analyzer"
             )
+            if df: injection_findings.append(df)
+            lines.append(
+                f"  [{f['risk']}] {clean_desc} — "
+                f"detected {f['count']} times"
+            )
+
     if "credential_assessment" in report_data and report_data["credential_assessment"]:
         ca = report_data["credential_assessment"]
         lines.append(f"\nCredential Assessment: {ca.get('summary', '')}")
         for f in ca.get("findings", []):
+            clean_service, sf = sanitize(
+                f.get("service", ""),
+                field_name="service",
+                source="credential_scanner"
+            )
+            clean_desc, df = sanitize(
+                f.get("description", ""),
+                field_name="description",
+                source="credential_scanner"
+            )
+            if sf: injection_findings.append(sf)
+            if df: injection_findings.append(df)
             lines.append(
-                f"  [{f['risk']}] {f['service']} — {f['description']}"
+                f"  [{f['risk']}] {clean_service} — {clean_desc}"
             )
 
     if "system_inspection" in report_data and report_data["system_inspection"]:
@@ -78,16 +120,64 @@ def build_scan_summary(report_data):
         lines.append(f"\nSystem Inspection: {si.get('summary', '')}")
         flagged_processes = si.get("processes", {}).get("flagged", [])
         for p in flagged_processes:
-            lines.append(f"  [HIGH] Suspicious process: {p['name']} — {p['description']}")
+            clean_name, nf = sanitize(
+                p.get("name", ""),
+                field_name="process_name",
+                source="system_inspector"
+            )
+            clean_desc, df = sanitize(
+                p.get("description", ""),
+                field_name="process_description",
+                source="system_inspector"
+            )
+            if nf: injection_findings.append(nf)
+            if df: injection_findings.append(df)
+            lines.append(
+                f"  [HIGH] Suspicious process: "
+                f"{clean_name} — {clean_desc}"
+            )
         flagged_startup = si.get("startup", {}).get("flagged", [])
         for s in flagged_startup:
-            lines.append(f"  [MEDIUM] Suspicious startup item: {s['name']}")
+            clean_name, nf = sanitize(
+                s.get("name", ""),
+                field_name="startup_item",
+                source="system_inspector"
+            )
+            if nf: injection_findings.append(nf)
+            lines.append(
+                f"  [MEDIUM] Suspicious startup item: {clean_name}"
+            )
 
     if "zero_trust" in report_data and report_data["zero_trust"]:
         zt = report_data["zero_trust"]
-        lines.append(f"\nZero Trust Verification: {zt.get('summary', '')}")
+        lines.append(
+            f"\nZero Trust Verification: {zt.get('summary', '')}"
+        )
         for f in zt.get("findings", []):
-            lines.append(f"  [{f['risk']}] {f['title']} — {f['description'][:120]}")
+            clean_title, tf = sanitize(
+                f.get("title", ""),
+                field_name="zt_title",
+                source="zero_trust"
+            )
+            clean_desc, df = sanitize(
+                f.get("description", "")[:120],
+                field_name="zt_description",
+                source="zero_trust"
+            )
+            if tf: injection_findings.append(tf)
+            if df: injection_findings.append(df)
+            lines.append(
+                f"  [{f['risk']}] {clean_title} — {clean_desc}"
+            )
+
+    if injection_findings:
+        lines.append(
+            f"\n⚠️  SECURITY ALERT: {len(injection_findings)} prompt "
+            f"injection attempt(s) detected in scan data. Someone on "
+            f"your network may be attempting to manipulate Recon AI's "
+            f"AI analysis. These findings have been sanitized and "
+            f"blocked from reaching the AI."
+        )
 
     return "\n".join(lines)
 
