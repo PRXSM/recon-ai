@@ -23,6 +23,7 @@ from system_inspector import run_system_inspection
 from credential_scanner import run_credential_assessment
 from shadow_ai import run_shadow_ai_scan
 from nist_owasp import map_findings, generate_compliance_summary
+from zero_trust import run_zero_trust
 from dotenv import load_dotenv
 import datetime
 import logging
@@ -320,6 +321,18 @@ def scan():
             credential_assessment = None
     report_data["credential_assessment"] = credential_assessment
 
+    # Zero Trust Verification
+    zero_trust = None
+    if "zero_trust" in tools:
+        try:
+            live_hosts = report_data.get("live_hosts", [])
+            open_ports = report_data.get("open_ports", [])
+            zero_trust = run_zero_trust(live_hosts, open_ports, ip)
+        except Exception as e:
+            logger.error(f"Zero Trust scan failed: {e}")
+            zero_trust = None
+    report_data["zero_trust"] = zero_trust
+
     # Compliance mapping
     all_findings = (
         report_data.get("vulnerabilities", []) +
@@ -390,7 +403,8 @@ def scan():
         system_inspection=system_inspection,
         credential_assessment=credential_assessment,
         mapped_findings=report_data.get("mapped_findings", []),
-        compliance=report_data.get("compliance"))
+        compliance=report_data.get("compliance"),
+        zero_trust=report_data.get("zero_trust"))
 
 @app.route("/network-intel")
 def network_intel():

@@ -82,7 +82,13 @@ def build_scan_summary(report_data):
         flagged_startup = si.get("startup", {}).get("flagged", [])
         for s in flagged_startup:
             lines.append(f"  [MEDIUM] Suspicious startup item: {s['name']}")
-            
+
+    if "zero_trust" in report_data and report_data["zero_trust"]:
+        zt = report_data["zero_trust"]
+        lines.append(f"\nZero Trust Verification: {zt.get('summary', '')}")
+        for f in zt.get("findings", []):
+            lines.append(f"  [{f['risk']}] {f['title']} — {f['description'][:120]}")
+
     return "\n".join(lines)
 
 # calculate network risk score
@@ -123,6 +129,16 @@ def calculate_risk_score(report_data):
             elif risk == "MEDIUM":
                 shadow_deduction += 5
         score -= min(shadow_deduction, 20)
+
+    # Zero Trust deductions
+    zero_trust = report_data.get("zero_trust")
+    if zero_trust and not zero_trust.get("clean"):
+        zt_critical = zero_trust.get("critical_count", 0)
+        zt_high     = zero_trust.get("high_count", 0)
+        zt_new      = zero_trust.get("new_device_count", 0)
+        score -= zt_critical * 8
+        score -= zt_high     * 4
+        score -= zt_new      * 5
 
     # deduct for NIST Respond/Detect findings
     if "compliance" in report_data:
