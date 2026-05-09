@@ -8,7 +8,8 @@ Four checks:
 1. New device detection — devices not seen in previous scans
 2. Implicit trust signals — admin services open to all devices
 3. Guest device risk — unknown devices with access to internal services
-4. Trust recommendations — plain English, tiered by router capability
+4. Tiered recommendations — built into every finding, managed vs
+   basic router guidance
 
 This tool NEVER modifies, deletes, or acts on any system.
 It observes and reports only.
@@ -48,6 +49,26 @@ IMPLICIT_TRUST_PORTS = {
     9090:  ("Web Admin Panel",       "MEDIUM"),
     9200:  ("Elasticsearch",         "CRITICAL"),
     27017: ("MongoDB Database",      "CRITICAL"),
+}
+
+MOBILE_VENDORS = {
+    "apple",
+    "samsung",
+    "qualcomm",
+    "mediatek",
+    "huawei",
+    "xiaomi",
+    "oneplus",
+    "oppo",
+    "vivo",
+    "realme",
+    "google",
+    "motorola",
+    "nokia",
+    "sony",
+    "lg electronics",
+    "zte",
+    "alcatel",
 }
 
 _BARRIER_SENTENCE = (
@@ -279,6 +300,17 @@ _FIXES = {
     ),
 }
 
+_GUEST_FIX = (
+    "If you have a managed router that supports guest networks: "
+    "set up a separate guest WiFi network and make sure it cannot "
+    "reach your main network devices. Look for a 'Guest Network' "
+    "or 'Network Isolation' setting in your router's admin panel. "
+    "If you have a basic home router: change your WiFi password "
+    "regularly and only share it with people you trust. Consider "
+    "turning off file sharing and remote desktop on your main "
+    "devices when guests are present."
+)
+
 
 def check_new_devices(live_hosts, scanned_ip):
     """
@@ -377,6 +409,85 @@ def check_implicit_trust(live_hosts, open_ports):
     return findings
 
 
+def check_guest_devices(live_hosts, open_ports, new_device_macs):
+    """
+    Identifies devices that appear to be personal or guest devices
+    on a network where high-risk services are openly accessible.
+    Uses multiple signals to classify devices — never a single signal
+    alone. Always uses hedged language ('appears to be', 'may be').
+    Only produces findings when implicit trust ports are also open
+    on the same subnet. Returns a list of finding dicts.
+    """
+    # RULE 1 — only produce findings if implicit trust ports are open
+    parsed_ports = set()
+    for entry in open_ports:
+        m = re.match(r"(\d+)", str(entry))
+        if m:
+            parsed_ports.add(int(m.group(1)))
+
+    open_implicit = parsed_ports & set(IMPLICIT_TRUST_PORTS.keys())
+    if not open_implicit:
+        return []
+
+    open_service_count = len(open_implicit)
+    findings = []
+
+    for device in live_hosts:
+        ip = device.get("ip", "Unknown") if isinstance(device, dict) else str(device)
+        vendor = device.get("vendor", "") if isinstance(device, dict) else ""
+        vendor_lower = vendor.lower()
+
+        # RULE 2 — collect signals
+        mobile_vendor = any(m in vendor_lower for m in MOBILE_VENDORS)
+
+        device_mac = device.get("mac", "").lower() if isinstance(device, dict) else ""
+        no_prior_history = bool(device_mac and device_mac in new_device_macs)
+
+        no_hostname = not device.get("hostname", "") if isinstance(device, dict) else True
+
+        signal_count = sum([mobile_vendor, no_prior_history, no_hostname])
+        if signal_count < 2:
+            continue
+
+        vendor_display = vendor if vendor else "an unknown manufacturer"
+
+        if mobile_vendor and no_prior_history:
+            description = (
+                f"I found a device that appears to be a personal or mobile device — "
+                f"it's made by {vendor_display} and I haven't seen it on your network before. "
+                f"It may be a guest or visitor's device. On this network, it could potentially "
+                f"reach {open_service_count} service(s) that should be restricted to trusted "
+                f"devices only."
+            )
+        elif mobile_vendor and no_hostname:
+            description = (
+                f"I found a device made by {vendor_display} that has no network name — "
+                f"this is common with phones and tablets. It appears to be a personal device "
+                f"and may have access to sensitive services on your network that should be "
+                f"restricted to trusted devices only."
+            )
+        else:
+            description = (
+                f"I found a device I haven't seen before that has no network name. "
+                f"It may be a guest or temporary device. On this network, it could potentially "
+                f"reach {open_service_count} service(s) that should be restricted to trusted "
+                f"devices only."
+            )
+
+        findings.append({
+            "mac":    device.get("mac", "Unknown") if isinstance(device, dict) else "Unknown",
+            "vendor": vendor if vendor else "Unknown",
+            "ip":     ip,
+            "risk":   "MEDIUM",
+            "title":  "A personal or mobile device may have access to sensitive services on your network",
+            "description": description,
+            "fix":    _GUEST_FIX,
+            "type":   "guest_device",
+        })
+
+    return findings
+
+
 def run_zero_trust(live_hosts, open_ports, scanned_ip):
     """
     Main entry point. Runs all Zero Trust checks and returns a structured
@@ -396,13 +507,20 @@ def run_zero_trust(live_hosts, open_ports, scanned_ip):
     """
     new_device_findings     = check_new_devices(live_hosts, scanned_ip)
     implicit_trust_findings = check_implicit_trust(live_hosts, open_ports)
+    new_device_macs = {
+        f.get("mac", "").lower()
+        for f in new_device_findings
+        if f.get("mac") and f.get("mac") != "Unknown"
+    }
+    guest_device_findings   = check_guest_devices(live_hosts, open_ports, new_device_macs)
 
-    all_findings = new_device_findings + implicit_trust_findings
+    all_findings = new_device_findings + implicit_trust_findings + guest_device_findings
 
     total_found          = len(all_findings)
     clean                = total_found == 0
     new_device_count     = len(new_device_findings)
     implicit_trust_count = len(implicit_trust_findings)
+    guest_device_count   = len(guest_device_findings)
     critical_count       = sum(1 for f in all_findings if f.get("risk") == "CRITICAL")
     high_count           = sum(1 for f in all_findings if f.get("risk") == "HIGH")
 
@@ -412,10 +530,20 @@ def run_zero_trust(live_hosts, open_ports, scanned_ip):
             "Every device I've seen before is still here, and no high-risk services are "
             "openly accessible across your network. Good posture."
         )
+    elif new_device_count > 0 and critical_count > 0 and guest_device_count > 0:
+        summary = (
+            f"I found {new_device_count} new device(s), {guest_device_count} potential "
+            f"guest device(s), and {critical_count} critical service(s) open to all of them. "
+            "This is a serious trust boundary failure — review immediately."
+        )
     elif new_device_count > 0 and critical_count > 0:
+        guest_note = (
+            f" I also spotted {guest_device_count} potential guest device(s) on the network."
+            if guest_device_count > 0 else ""
+        )
         summary = (
             f"I found {new_device_count} new device(s) on your network and "
-            f"{critical_count} critical service(s) open to all devices. "
+            f"{critical_count} critical service(s) open to all devices.{guest_note} "
             "These need your attention — an unknown device combined with open critical "
             "services is a serious trust boundary failure."
         )
@@ -444,7 +572,8 @@ def run_zero_trust(live_hosts, open_ports, scanned_ip):
 
     logger.info(
         f"Zero Trust scan complete. {total_found} finding(s): "
-        f"{new_device_count} new device(s), {implicit_trust_count} implicit trust issue(s)."
+        f"{new_device_count} new device(s), {implicit_trust_count} implicit trust issue(s), "
+        f"{guest_device_count} guest device(s)."
     )
 
     return {
@@ -453,6 +582,7 @@ def run_zero_trust(live_hosts, open_ports, scanned_ip):
         "clean":                clean,
         "new_device_count":     new_device_count,
         "implicit_trust_count": implicit_trust_count,
+        "guest_device_count":   guest_device_count,
         "critical_count":       critical_count,
         "high_count":           high_count,
         "summary":              summary,

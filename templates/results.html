@@ -798,6 +798,40 @@
             </div>
         </div>
         {% endif %}
+
+        {# Guest Device findings #}
+        {% set guest_findings = zero_trust.findings | selectattr("type", "equalto", "guest_device") | list %}
+        {% if guest_findings %}
+        <div style="background:#0e0e0e; border:1px solid #1a1a1a; border-radius:8px; overflow:hidden; margin-top:12px;">
+            <div class="device-group-header" onclick="toggleGroup(this)"
+                 style="padding:12px 16px; display:flex; align-items:center; gap:10px; background:#111; border:1px solid #1e1e1e; border-radius:8px; cursor:pointer; user-select:none;">
+                <span>👤</span>
+                <span style="color:#e0e0e0; font-weight:bold; font-size:0.9em; flex:1;">Personal &amp; Guest Devices</span>
+                <span style="background:#1a1400; color:#ffcc00; border:1px solid #443311; border-radius:10px; padding:2px 10px; font-size:0.78em; font-weight:bold;">
+                    {{ guest_findings|length }} device(s)
+                </span>
+                <span class="group-chevron" style="color:#333; font-size:0.75em;">▼</span>
+            </div>
+            <div class="device-group-body" style="display:none; border:1px solid #1e1e1e; border-top:none; border-radius:0 0 8px 8px; background:#0c0c0c; overflow:hidden;">
+                {% for finding in guest_findings %}
+                <div style="padding:12px 16px; border-bottom:1px solid #141414;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                        <span style="color:#ffcc00; font-weight:bold; font-size:0.9em;">{{ finding.title }}</span>
+                        <span style="background:#1a1400; color:#ffcc00; border:1px solid #443311;
+                            border-radius:10px; padding:2px 8px; font-size:0.72em; font-weight:bold;">
+                            {{ finding.risk }}
+                        </span>
+                    </div>
+                    <div style="color:#666; font-size:0.78em; line-height:1.5; margin-bottom:6px;">{{ finding.description }}</div>
+                    <div style="background:#0a0a0a; border:1px solid #1a1a1a; border-radius:6px; padding:8px 12px;">
+                        <span style="color:#44cc77; font-size:0.72em; font-weight:bold;">What to do: </span>
+                        <span style="color:#444; font-size:0.75em; line-height:1.5;">{{ finding.fix }}</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
     </div>
     {% endif %}
 
