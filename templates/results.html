@@ -243,6 +243,59 @@
     </div>
     {% endif %}
 
+    {% if agent_result and agent_result.priority_action
+          and not agent_result.both_failed %}
+    <div style="
+        background: linear-gradient(135deg, #0a1628, #0d1f2d);
+        border: 1px solid #00bfff;
+        border-left: 4px solid #00bfff;
+        border-radius: 10px;
+        padding: 18px 22px;
+        margin: 16px 0;
+    ">
+        <div style="
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        ">
+            <span style="font-size: 1.2em;">🎯</span>
+            <span style="
+                color: #00bfff;
+                font-weight: bold;
+                font-size: 0.85em;
+                text-transform: uppercase;
+                letter-spacing: 0.06em;
+            ">Priority Action</span>
+            {% if agent_result.adversary_failed %}
+            <span style="
+                background: #1a1400;
+                color: #888;
+                border: 1px solid #333;
+                border-radius: 8px;
+                padding: 2px 8px;
+                font-size: 0.7em;
+            ">Based on primary analysis</span>
+            {% else %}
+            <span style="
+                background: #0a1a0a;
+                color: #44cc77;
+                border: 1px solid #1a4a1a;
+                border-radius: 8px;
+                padding: 2px 8px;
+                font-size: 0.7em;
+            ">Verified by Adversary Agent ✓</span>
+            {% endif %}
+        </div>
+        <p style="
+            color: #e0e0e0;
+            font-size: 1em;
+            margin: 0;
+            line-height: 1.6;
+        ">{{ agent_result.priority_action }}</p>
+    </div>
+    {% endif %}
+
     {% if last_scan %}
     <div style="
         background:#0d0d1a;
@@ -505,7 +558,7 @@
                 {% endif %}
             </div>
             {% if not proc.clean %}
-            {% for item in proc.flagged %}
+            {% for item in proc.flagged[:3] %}
             <div style="padding:10px 16px; border-bottom:1px solid #141414; background:#140800;">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
                     <span style="font-family:monospace; color:#ff8800; font-size:0.85em;">{{ item.name }}</span>
@@ -515,6 +568,26 @@
                 <div style="color:#333; font-size:0.72em; font-family:monospace; margin-top:3px;">PID {{ item.pid }} — {{ item.command[:80] }}</div>
             </div>
             {% endfor %}
+            {% if proc.flagged|length > 3 %}
+            <div id="proc-overflow" style="display:none;">
+                {% for item in proc.flagged[3:] %}
+                <div style="padding:10px 16px; border-bottom:1px solid #141414; background:#140800;">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <span style="font-family:monospace; color:#ff8800; font-size:0.85em;">{{ item.name }}</span>
+                        <span style="background:#2a0000; color:#cc4444; border:1px solid #441111; border-radius:10px; padding:2px 8px; font-size:0.72em; font-weight:bold;">{{ item.risk }}</span>
+                    </div>
+                    <div style="color:#666; font-size:0.78em; margin-top:4px; line-height:1.4;">{{ item.description }}</div>
+                    <div style="color:#333; font-size:0.72em; font-family:monospace; margin-top:3px;">PID {{ item.pid }} — {{ item.command[:80] }}</div>
+                </div>
+                {% endfor %}
+            </div>
+            <div style="padding:8px 16px; border-top:1px solid #141414;">
+                <button onclick="toggleOverflow('proc-overflow', this, {{ proc.flagged|length }}, 'processes')"
+                        style="background:none; border:none; color:#444; font-size:0.82em; cursor:pointer; padding:0;">
+                    Show all {{ proc.flagged|length }} processes
+                </button>
+            </div>
+            {% endif %}
             {% else %}
             <div style="padding:10px 16px; color:#333; font-size:0.82em;">No suspicious processes found.</div>
             {% endif %}
@@ -534,7 +607,7 @@
                 {% endif %}
             </div>
             {% if not startup.clean %}
-            {% for item in startup.flagged %}
+            {% for item in startup.flagged[:3] %}
             <div style="padding:10px 16px; border-bottom:1px solid #141414;">
                 <div style="font-family:monospace; color:#cc9933; font-size:0.82em;">{{ item.name }}</div>
                 {% if item.program %}
@@ -543,6 +616,25 @@
                 <div style="color:#555; font-size:0.78em; margin-top:4px; line-height:1.4;">{{ item.description }}</div>
             </div>
             {% endfor %}
+            {% if startup.flagged|length > 3 %}
+            <div id="startup-overflow" style="display:none;">
+                {% for item in startup.flagged[3:] %}
+                <div style="padding:10px 16px; border-bottom:1px solid #141414;">
+                    <div style="font-family:monospace; color:#cc9933; font-size:0.82em;">{{ item.name }}</div>
+                    {% if item.program %}
+                    <div style="color:#444; font-size:0.75em; font-family:monospace; margin-top:2px;">{{ item.program }}</div>
+                    {% endif %}
+                    <div style="color:#555; font-size:0.78em; margin-top:4px; line-height:1.4;">{{ item.description }}</div>
+                </div>
+                {% endfor %}
+            </div>
+            <div style="padding:8px 16px; border-top:1px solid #141414;">
+                <button onclick="toggleOverflow('startup-overflow', this, {{ startup.flagged|length }}, 'items')"
+                        style="background:none; border:none; color:#444; font-size:0.82em; cursor:pointer; padding:0;">
+                    Show all {{ startup.flagged|length }} items
+                </button>
+            </div>
+            {% endif %}
             {% else %}
             <div style="padding:10px 16px; color:#333; font-size:0.82em;">All startup items are from recognized publishers.</div>
             {% endif %}
@@ -562,13 +654,30 @@
                 {% endif %}
             </div>
             {% if not changes.clean %}
-            {% for item in changes.flagged %}
+            {% for item in changes.flagged[:4] %}
             <div style="padding:10px 16px; border-bottom:1px solid #141414;">
                 <div style="font-family:monospace; color:#7fd8ff; font-size:0.82em;">{{ item.path }}</div>
                 <div style="color:#444; font-size:0.75em; margin-top:2px;">Modified: {{ item.modified }}</div>
                 <div style="color:#555; font-size:0.78em; margin-top:4px; line-height:1.4;">{{ item.description }}</div>
             </div>
             {% endfor %}
+            {% if changes.flagged|length > 4 %}
+            <div id="changes-overflow" style="display:none;">
+                {% for item in changes.flagged[4:] %}
+                <div style="padding:10px 16px; border-bottom:1px solid #141414;">
+                    <div style="font-family:monospace; color:#7fd8ff; font-size:0.82em;">{{ item.path }}</div>
+                    <div style="color:#444; font-size:0.75em; margin-top:2px;">Modified: {{ item.modified }}</div>
+                    <div style="color:#555; font-size:0.78em; margin-top:4px; line-height:1.4;">{{ item.description }}</div>
+                </div>
+                {% endfor %}
+            </div>
+            <div style="padding:8px 16px; border-top:1px solid #141414;">
+                <button onclick="toggleOverflow('changes-overflow', this, {{ changes.flagged|length }}, 'changes')"
+                        style="background:none; border:none; color:#444; font-size:0.82em; cursor:pointer; padding:0;">
+                    Show all {{ changes.flagged|length }} changes
+                </button>
+            </div>
+            {% endif %}
             {% else %}
             <div style="padding:10px 16px; color:#333; font-size:0.82em;">No unexpected changes found in the last {{ changes.days_checked }} days.</div>
             {% endif %}
@@ -1075,6 +1184,12 @@
     <script>
     function toggleVerifyDeep(t) {
         t.nextElementSibling.classList.toggle('open');
+    }
+    function toggleOverflow(id, btn, total, label) {
+        var el = document.getElementById(id);
+        var hidden = el.style.display === 'none';
+        el.style.display = hidden ? 'block' : 'none';
+        btn.textContent = hidden ? 'Show less' : 'Show all ' + total + ' ' + label;
     }
     function toggleGroup(header) {
         const body = header.nextElementSibling;

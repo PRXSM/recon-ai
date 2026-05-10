@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, send_file
 import io
 from engine import build_scan_summary, calculate_risk_score, get_risk_label, parse_port_number
 from ai_assistant import analyze_with_ai
+from ai_agents import run_agent_analysis
 import markdown as md
 from port_scanner import scan_target
 from network_mapper import scan_subnet
@@ -365,6 +366,8 @@ def scan():
 
     # AI Analysis
     ai_analysis = None
+    agent_result = None
+    summary = None
     if use_ai:
         try:
             summary = build_scan_summary(report_data)
@@ -373,10 +376,26 @@ def scan():
                 raw = analyze_with_ollama(summary)
             else:
                 raw = analyze_with_ai(summary)
-            ai_analysis = md.markdown(raw, extensions=["fenced_code", "tables"])
+            ai_analysis = md.markdown(
+                raw, extensions=["fenced_code", "tables"]
+            )
         except Exception as e:
             logger.error(f"AI analysis failed: {e}", exc_info=True)
             ai_analysis = "<p>AI analysis unavailable. Your scan results are shown below.</p>"
+
+    # Agent Analysis — Adversary + Risk Prioritizer
+    # Runs after primary AI analysis in Standard and Private modes
+    # Offline mode is handled inside run_agent_analysis()
+    if use_ai and ai_analysis and summary and ai_mode != "offline":
+        try:
+            agent_result = run_agent_analysis(
+                summary,
+                raw if raw else "",
+                ai_mode=ai_mode,
+            )
+        except Exception as e:
+            logger.error(f"Agent analysis failed: {e}")
+            agent_result = None
 
     # Offline explanations — built from plain_english.py when AI is not used
     offline_explanations = []
@@ -404,7 +423,8 @@ def scan():
         credential_assessment=credential_assessment,
         mapped_findings=report_data.get("mapped_findings", []),
         compliance=report_data.get("compliance"),
-        zero_trust=report_data.get("zero_trust"))
+        zero_trust=report_data.get("zero_trust"),
+        agent_result=agent_result)
 
 @app.route("/network-intel")
 def network_intel():
