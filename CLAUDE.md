@@ -112,9 +112,11 @@ Labels: **GOOD** (80–100) / **MODERATE** (60–79) / **AT RISK** (40–59) / *
 
 ## Current Development Phase
 
-Phase 14c in progress. Phases 1–14b complete.
+Phase 14c complete. Phases 1–14c complete.
 
 Note: BUG-01 (socket.setdefaulttimeout() process-wide timeout in port_scanner.py) was documented as a Phase 14 fix in the PRD but was not applied until Phase 14c prep.
+
+Phase 14c delivered: ReconAI.exe — single-file Windows executable. Double-click launches Flask and auto-opens browser at http://127.0.0.1:5000. No Python, venv, or setup required. Built with PyInstaller 6.20.0 on Python 3.14 Windows 11. First non-technical user test completed successfully.
 
 ## Brand Voice — Recon AI speaks in first person
 

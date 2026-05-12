@@ -431,10 +431,44 @@
 
     {% if report_data.open_ports %}
     <h2>🔓 Open Ports</h2>
-    <p style="font-size:0.85em;">These are doors into your network. Each one should be intentional.</p>
-    {% for port in report_data.open_ports %}
+    <p style="font-size:0.85em;">These are doors into your network. Each one should be intentional.
+    {% if report_data.open_ports | length > 4 %} Showing 4 of {{ report_data.open_ports | length }}.{% endif %}
+    </p>
+
+    {% for port in report_data.open_ports[:4] %}
     <div class="card">{{ port }}</div>
     {% endfor %}
+
+    {% if report_data.open_ports | length > 4 %}
+    <div id="ports_overflow" style="display:none;">
+        {% for port in report_data.open_ports[4:] %}
+        <div class="card">{{ port }}</div>
+        {% endfor %}
+    </div>
+    <div style="text-align:center; margin-top:10px;">
+        <button onclick="
+            const el = document.getElementById('ports_overflow');
+            const btn = this;
+            if (el.style.display === 'none') {
+                el.style.display = 'block';
+                btn.textContent = '▲ Show fewer ports';
+            } else {
+                el.style.display = 'none';
+                btn.textContent = '▼ Show all {{ report_data.open_ports | length }} ports';
+            }
+        " style="
+            background:#0d1a0d;
+            border:1px solid #1a4a1a;
+            color:#44cc77;
+            border-radius:6px;
+            padding:8px 18px;
+            font-size:0.82em;
+            cursor:pointer;
+            font-family:Arial, sans-serif;">
+            ▼ Show all {{ report_data.open_ports | length }} ports
+        </button>
+    </div>
+    {% endif %}
     {% endif %}
 
     {% if report_data.live_hosts %}

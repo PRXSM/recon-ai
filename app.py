@@ -294,6 +294,16 @@ def scan():
 
     # Network Mapper
     if "network_mapper" in tools:
+        # Detect the local machine's IP so we can label it in results
+        import socket as _socket
+        try:
+            _s = _socket.socket(_socket.AF_INET, _socket.SOCK_DGRAM)
+            _s.connect(("8.8.8.8", 80))
+            local_machine_ip = _s.getsockname()[0]
+            _s.close()
+        except Exception:
+            local_machine_ip = None
+
         try:
             live_hosts = scan_subnet(ip)
         except Exception as e:
@@ -303,9 +313,15 @@ def scan():
         fingerprinted = []
         for host in live_hosts:
             try:
-                fingerprinted.append(
-                    fingerprint_device(host["ip"], host.get("mac"))
-                )
+                device = fingerprint_device(host["ip"], host.get("mac"))
+                # If this IP matches the machine running the scan, label it clearly
+                if local_machine_ip and host["ip"] == local_machine_ip:
+                    device["display"] = "This machine"
+                    device["emoji"] = "💻"
+                    device["label"] = "This machine"
+                    device["description"] = "This is the computer you're running Recon AI on."
+                    device["vendor"] = "Local machine"
+                fingerprinted.append(device)
             except Exception as e:
                 logger.error(f"Fingerprint failed for {host}: {e}")
                 fingerprinted.append({"ip": host["ip"], "mac": host.get("mac", ""), "display": host["ip"]})

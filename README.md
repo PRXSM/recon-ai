@@ -112,9 +112,24 @@ Recon AI runs locally on your machine — which means it has access to things no
 
 ---
 
-## Running It Locally
+## Getting Started
 
-You need Python 3.9+. An Anthropic API key is optional — only needed if you want the AI analysis.
+### Option 1 — Download (Recommended)
+
+No Python, no setup, no terminal. Just download and double-click.
+
+| Platform | Download |
+|---|---|
+| **Windows** | [ReconAI-Windows.exe](https://github.com/PRXSM/recon-ai/releases/latest) |
+| **macOS** | [ReconAI-macOS.zip](https://github.com/PRXSM/recon-ai/releases/latest) — unzip and double-click ReconAI |
+
+**Windows:** Windows Defender may show a "Windows protected your PC" warning. Click "More info" → "Run anyway." This is expected for unsigned applications.
+
+**macOS:** If macOS blocks the app, go to System Settings → Privacy & Security → click "Open Anyway."
+
+### Option 2 — Run from Source (Developers)
+
+You need Python 3.11+. An Anthropic API key is optional — only needed for AI analysis.
 
 ```bash
 # Clone
