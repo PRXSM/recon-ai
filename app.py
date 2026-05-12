@@ -646,4 +646,13 @@ def shadow_ai_scan():
 
 # run
 if __name__ == "__main__":
+    import threading
+    import webbrowser
+
+    def open_browser():
+        import time
+        time.sleep(1.5)  # Wait for Flask to start
+        webbrowser.open("http://127.0.0.1:5000")
+
+    threading.Thread(target=open_browser, daemon=True).start()
     app.run(debug=False, threaded=True)
