@@ -10,27 +10,12 @@ from nist_owasp import map_findings, generate_compliance_summary
 from prompt_injection import sanitize, sanitize_list
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO)
+
+# Core engine functions — all called by app.py. CLI interface removed in Phase 14c.
 
 def parse_port_number(port_string):
     """Extract the integer port number from a scan result string like 'Port 80: OPEN (HTTP)'."""
     return int(port_string.split()[1].replace(":", ""))
-
-SCAN_MODES = {
-    "1": "Quick Scan      — Port scan + AI analysis",
-    "2": "Network Scan    — Map network + Port scan + AI analysis",
-    "3": "Full Recon      — Everything, full report",
-    "4": "Log Analysis    — Analyze local logs + AI analysis",
-}
-
-# menu
-def show_menu():
-    print("\n" + "="*50)
-    print("        RECON AI — UNIFIED ENGINE")
-    print("="*50)
-    for key, value in SCAN_MODES.items():
-        print(f"  [{key}] {value}")
-    print("="*50)
 
 # build summary for AI — IP always redacted for privacy
 def build_scan_summary(report_data):
@@ -256,81 +241,3 @@ def get_risk_label(score):
     else:
         return "CRITICAL", "🔴"
 
-# save unified report
-def save_unified_report(report_data, ai_analysis, timestamp, score):
-    mode = report_data.get("mode", "scan").replace(" ", "_")
-    filename = f"recon_ai_{mode}_{timestamp}.txt"
-    label, emoji = get_risk_label(score)
-    with open(filename, "w") as f:
-        f.write("="*50 + "\n")
-        f.write("       RECON AI — UNIFIED REPORT\n")
-        f.write("="*50 + "\n")
-        f.write(f"Mode: {report_data.get('mode')}\n")
-        f.write(f"Time: {timestamp}\n")
-        f.write(f"Network Health Score: {score}/100 {emoji} {label}\n")
-        f.write("="*50 + "\n\n")
-        f.write("SCAN SUMMARY:\n")
-        f.write(build_scan_summary(report_data) + "\n\n")
-        f.write("="*50 + "\n")
-        f.write("RECON AI ANALYSIS:\n")
-        f.write("="*50 + "\n")
-        f.write(ai_analysis + "\n")
-    return filename
-
-# the brain
-def run_engine():
-    show_menu()
-    choice = input("\nSelect scan mode (1-4): ").strip()
-
-    if choice not in SCAN_MODES:
-        print("Invalid choice. Exiting.")
-        return None, None
-
-    timestamp = datetime.datetime.now().isoformat()
-
-    if choice == "1":
-        target = input("Enter target IP: ").strip()
-        open_ports = scan_target(target)
-        report_data = {"mode": "Quick Scan", "target": target, "open_ports": open_ports}
-
-    elif choice == "2":
-        target = input("Enter subnet: ").strip()
-        live_hosts = scan_subnet(target)
-        report_data = {"mode": "Network Scan", "target": target, "live_hosts": live_hosts}
-
-    elif choice == "3":
-        target = input("Enter target IP: ").strip()
-        open_ports = scan_target(target)
-        report_data = {"mode": "Full Recon", "target": target, "open_ports": open_ports}
-
-    elif choice == "4":
-        log_files = find_log_files()
-        raw = []
-        for lf in log_files:
-            raw.extend(analyze_log(lf))
-        report_data = {"mode": "Log Analysis", "log_findings": group_findings(raw)}
-
-    all_findings = report_data.get("vulnerabilities", []) + report_data.get("log_findings", [])
-    if all_findings:
-        mapped = map_findings(all_findings)
-        report_data["mapped_findings"] = mapped
-        report_data["compliance"] = generate_compliance_summary(mapped)
-
-    return report_data, timestamp
-
-if __name__ == "__main__":
-    report_data, timestamp = run_engine()
-    if report_data:
-        score = calculate_risk_score(report_data)
-        label, emoji = get_risk_label(score)
-        print(f"\nNetwork Health Score: {score}/100 {emoji} {label}")
-        print("\nSending results to Recon AI for analysis...")
-        summary = build_scan_summary(report_data)
-        ai_analysis = analyze_with_ai(summary)
-        print("\n" + "="*50)
-        print("RECON AI SAYS:")
-        print("="*50)
-        print(ai_analysis)
-        filename = save_unified_report(
-            report_data, ai_analysis, timestamp, score)
-        print(f"\nFull report saved to: {filename}")

@@ -13,6 +13,7 @@ venv/
 
 # Scan history database — local only, never committed
 scans.db
+scans.db-*
 
 # OUI vendor database — downloaded at setup, not committed (3.6 MB)
 oui.csv

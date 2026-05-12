@@ -210,5 +210,64 @@
     </div>
 
     <a href="/" class="back-btn">← Back to Scanner</a>
+
+    <script>
+        // ── Traceroute loading state ─────────────────────────────────────────
+        function showTracerouteLoading() {
+            const btn = document.querySelector('.retrace-form button');
+            if (btn) {
+                btn.textContent = 'Tracing...';
+                btn.disabled = true;
+                btn.style.opacity = '0.6';
+            }
+
+            const targetBar = document.querySelector('.target-bar');
+            if (targetBar) {
+                const loadingDiv = document.createElement('div');
+                loadingDiv.id = 'traceroute_loading';
+                loadingDiv.style.cssText = 'margin-bottom: 16px;';
+                loadingDiv.innerHTML = `
+                    <div style="background:#1a1a1a; border-radius:6px; height:4px; width:100%; overflow:hidden; margin-bottom:8px;">
+                        <div id="trace_bar" style="
+                            height:100%;
+                            width:0%;
+                            background: linear-gradient(90deg, #00bfff, #0088cc);
+                            border-radius:6px;
+                            animation: traceProgress 30s ease-out forwards;
+                        "></div>
+                    </div>
+                    <div style="color:#555; font-size:0.78em; font-family:monospace;">
+                        Tracing route — checking each hop on the path...
+                    </div>
+                `;
+
+                if (!document.getElementById('trace_style')) {
+                    const style = document.createElement('style');
+                    style.id = 'trace_style';
+                    style.textContent = `
+                        @keyframes traceProgress {
+                            0%   { width: 0%; }
+                            30%  { width: 40%; }
+                            60%  { width: 65%; }
+                            85%  { width: 82%; }
+                            100% { width: 90%; }
+                        }
+                    `;
+                    document.head.appendChild(style);
+                }
+
+                targetBar.insertAdjacentElement('afterend', loadingDiv);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const retraceForm = document.querySelector('.retrace-form');
+            if (retraceForm) {
+                retraceForm.addEventListener('submit', function() {
+                    showTracerouteLoading();
+                });
+            }
+        });
+    </script>
 </body>
 </html>

@@ -58,6 +58,7 @@ limiter = Limiter(
     storage_uri="memory://"
 )
 
+# init_db() called once at startup — do not call again inside save_scan() or get_last_scan()
 init_db()
 
 
@@ -232,7 +233,17 @@ def build_text_report(report_data, ai_analysis, timestamp):
 # routes
 @app.route("/")
 def index():
-    return render_template("index.html")
+    import socket as _socket
+    try:
+        # Connect to an external address to determine the local IP.
+        # No data is sent — this only determines the outbound interface IP.
+        s = _socket.socket(_socket.AF_INET, _socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        detected_ip = s.getsockname()[0]
+        s.close()
+    except Exception:
+        detected_ip = ""
+    return render_template("index.html", detected_ip=detected_ip)
 
 @app.route("/scan", methods=["POST"])
 @limiter.limit("10 per minute")  # Rate limited — prevents abuse on hosted version.
@@ -543,6 +554,9 @@ def traceroute_view():
     if not is_private_ip(host):
         logger.warning(f"traceroute: rejected non-private host {host!r}, using default")
         host = "192.168.1.1"
+    # run_traceroute() does not accept max_hops/timeout params — limits are
+    # hardcoded in network_intel.py: -m 15 hops, -w 2s per hop, 60s subprocess cap.
+    # If error is not None, traceroute.html renders the red timeout/error message.
     hops, error = run_traceroute(host)
     exps        = [explain_hop(h) for h in hops]
     return render_template("traceroute.html",
@@ -619,6 +633,11 @@ def shadow_ai_scan():
     report_data["score_emoji"] = emoji
 
     timestamp = datetime.datetime.now().isoformat()
+    # Save shadow AI scan to history — enables port change alerting on next scan
+    try:
+        save_scan(report_data, ip, timestamp)
+    except Exception as e:
+        logger.error(f"Failed to save shadow AI scan to history: {e}")
     return render_template("shadow_ai.html",
         report_data=report_data,
         shadow_ai_results=shadow_ai_results,

@@ -7,7 +7,6 @@ from pathlib import Path
 
 # Setup logging
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO)
 
 # Suspicious patterns to look for in logs
 PATTERNS = {
@@ -29,7 +28,7 @@ PATTERNS = {
     "new_user_created": {
         "regex": r"useradd|adduser|new user|user added",
         "risk": "HIGH",
-        "description": "New user account created - verify this was authroized."
+        "description": "New user account created - verify this was authorized."
     },
     "user_deleted": {
         "regex": r"userdel|user deleted|removed user",

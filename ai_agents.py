@@ -26,15 +26,10 @@ import os
 import logging
 import requests
 from dotenv import load_dotenv
-import anthropic
+from ai_assistant import client as anthropic_client
 
 load_dotenv()
 logger = logging.getLogger(__name__)
-
-client = anthropic.Anthropic(
-    api_key=os.getenv("ANTHROPIC_API_KEY"),
-    timeout=30.0,
-)
 
 ADVERSARY_SYSTEM_PROMPT = """You are the Adversary Agent for
 Recon AI — a specialized AI whose only job is to challenge
@@ -370,7 +365,7 @@ def run_adversary_agent(existing_analysis,
         f"Scan context (for reference only):\n{scan_summary[:500]}"
     )
     try:
-        message = client.messages.create(
+        message = anthropic_client.messages.create(
             model="claude-sonnet-4-20250514",
             max_tokens=1000,
             system=ADVERSARY_SYSTEM_PROMPT,
@@ -417,7 +412,7 @@ def run_prioritizer_agent(adversary_output,
         f"Scan context (for reference only):\n{scan_summary[:500]}"
     )
     try:
-        message = client.messages.create(
+        message = anthropic_client.messages.create(
             model="claude-sonnet-4-20250514",
             max_tokens=150,
             system=PRIORITIZER_SYSTEM_PROMPT,

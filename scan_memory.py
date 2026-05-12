@@ -43,8 +43,6 @@ def save_scan(report_data, ip, timestamp):
     Extracts fields from report_data, converts lists/dicts to JSON strings.
     Calls cleanup_old_scans() after saving to enforce 90-day retention.
     """
-    init_db()
-
     open_ports      = json.dumps(report_data.get("open_ports", []))
     devices_found   = json.dumps(report_data.get("live_hosts", []))
     vulnerabilities = json.dumps(report_data.get("vulnerabilities", []))
@@ -73,8 +71,6 @@ def get_last_scan(ip):
     Returns None if no previous scan exists for this IP.
     JSON columns are parsed back to lists/dicts automatically.
     """
-    init_db()
-
     with sqlite3.connect(DB_PATH) as conn:
         conn.row_factory = sqlite3.Row
         row = conn.execute("""

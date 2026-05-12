@@ -6,7 +6,6 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # Setup logging
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO)
 
 # Common ports and their services for basic identification
 common_ports = {
@@ -39,15 +38,11 @@ common_ports = {
 }
 
 def scan_port(target, port):
-    logger.info(f"Scanning port {port} on {target}")
+    """Scan a single TCP port. Uses create_connection() with a scoped timeout — does not affect global socket timeout."""
     try:
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        socket.setdefaulttimeout(0.5)
-        result = sock.connect_ex((target, port))
-        sock.close()
-        return result == 0
-    except socket.error as e:
-        logger.warning(f"Error scanning port {port}: {e}")
+        with socket.create_connection((target, port), timeout=0.5):
+            return True
+    except (socket.timeout, socket.error, OSError):
         return False
 
 def scan_ports_threaded(target, port_range, max_workers=100):

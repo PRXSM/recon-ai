@@ -112,7 +112,9 @@ Labels: **GOOD** (80–100) / **MODERATE** (60–79) / **AT RISK** (40–59) / *
 
 ## Current Development Phase
 
-Phase 14 in progress. Phases 1–13 complete.
+Phase 14c in progress. Phases 1–14b complete.
+
+Note: BUG-01 (socket.setdefaulttimeout() process-wide timeout in port_scanner.py) was documented as a Phase 14 fix in the PRD but was not applied until Phase 14c prep.
 
 ## Brand Voice — Recon AI speaks in first person
 

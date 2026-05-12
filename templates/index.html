@@ -133,6 +133,49 @@
         }
         .depth-btn:hover { border-color: #00bfff; }
         .depth-btn.selected { border-color: #00bfff; background: #0a1a2a; }
+        .welcome-banner {
+            background: linear-gradient(135deg, #0d1f2d, #0a1a0a);
+            border: 1px solid #1a3a2a;
+            border-left: 3px solid #00bfff;
+            border-radius: 8px;
+            padding: 20px 24px;
+            margin-bottom: 24px;
+        }
+        .welcome-banner h2 {
+            color: #00bfff;
+            font-size: 1.1em;
+            margin: 0 0 8px 0;
+        }
+        .welcome-banner p {
+            color: #aaa;
+            font-size: 0.9em;
+            margin: 0 0 12px 0;
+            line-height: 1.6;
+        }
+        .welcome-steps {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        .welcome-step {
+            background: #0a0a0a;
+            border: 1px solid #1a2a1a;
+            border-radius: 5px;
+            padding: 10px 12px;
+            font-size: 0.8em;
+            color: #888;
+        }
+        .welcome-step strong { color: #e0e0e0; display: block; margin-bottom: 2px; }
+        .welcome-dismiss {
+            font-size: 0.75em;
+            color: #444;
+            cursor: pointer;
+            text-decoration: underline;
+            margin-top: 12px;
+            display: inline-block;
+        }
+        .welcome-dismiss:hover { color: #666; }
     </style>
 </head>
 <body>
@@ -152,8 +195,91 @@
     </div>
 
     <form action="/scan" method="POST">
-        <label>Your Network IP Address</label>
-        <input type="text" name="target" placeholder="e.g. 10.0.0.99 or 10.0.0.0/24">
+        <!-- First-time welcome banner — hidden via localStorage after first dismissal -->
+        <div class="welcome-banner" id="welcomeBanner" style="display:none;">
+            <h2>👋 Hi, I'm Recon AI</h2>
+            <p>I check your network for security issues and explain everything in plain English. No technical knowledge needed. Your first scan takes about 30 seconds.</p>
+            <p style="color:#66bb66; font-size:0.85em;">Here's how it works:</p>
+            <div class="welcome-steps">
+                <div class="welcome-step"><strong>1. Pick what to check</strong>Choose this machine, your whole network, or a specific device</div>
+                <div class="welcome-step"><strong>2. Select your tools</strong>Start with Port Scanner + AI Analysis for your first scan</div>
+                <div class="welcome-step"><strong>3. Confirm it's your network</strong>Check the authorization box at the bottom</div>
+                <div class="welcome-step"><strong>4. Hit Run Scan</strong>I'll check everything and explain what I find in plain English</div>
+            </div>
+            <span class="welcome-dismiss" onclick="dismissWelcome()">Got it — don't show this again</span>
+        </div>
+
+        <!-- Scan intent selector — non-technical users choose what they want to check -->
+        <div style="margin-bottom: 16px;">
+            <label style="display:block; margin-bottom:10px; color:#e0e0e0; font-weight:bold;">What do you want me to check?</label>
+            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:14px;">
+                <div class="intent-btn" id="intent_this" onclick="selectIntent('this')" style="background:#1a1a1a; border:1px solid #333; border-radius:6px; padding:12px; text-align:center; cursor:pointer; transition:border-color 0.2s;">
+                    <div style="font-size:1.2em; margin-bottom:4px;">🖥️</div>
+                    <div style="font-weight:bold; font-size:0.85em; color:#e0e0e0;">This machine</div>
+                    <div style="font-size:0.75em; color:#666; margin-top:2px;">Check this computer</div>
+                </div>
+                <div class="intent-btn" id="intent_network" onclick="selectIntent('network')" style="background:#1a1a1a; border:1px solid #333; border-radius:6px; padding:12px; text-align:center; cursor:pointer; transition:border-color 0.2s;">
+                    <div style="font-size:1.2em; margin-bottom:4px;">🌐</div>
+                    <div style="font-weight:bold; font-size:0.85em; color:#e0e0e0;">My whole network</div>
+                    <div style="font-size:0.75em; color:#666; margin-top:2px;">Check all devices on WiFi</div>
+                </div>
+                <div class="intent-btn" id="intent_specific" onclick="selectIntent('specific')" style="background:#1a1a1a; border:1px solid #333; border-radius:6px; padding:12px; text-align:center; cursor:pointer; transition:border-color 0.2s;">
+                    <div style="font-size:1.2em; margin-bottom:4px;">🔍</div>
+                    <div style="font-weight:bold; font-size:0.85em; color:#e0e0e0;">A specific device</div>
+                    <div style="font-size:0.75em; color:#666; margin-top:2px;">Enter an IP address</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- IP input — hidden until "specific device" is selected, pre-filled otherwise -->
+        <div id="ip_input_section">
+            <label style="display:flex; align-items:center; gap:8px;">
+                Your Network IP Address
+                <span onclick="toggleIPHelp()" style="background:#1a2a1a; border:1px solid #336633; border-radius:3px; padding:2px 8px; font-size:0.75em; color:#66bb66; cursor:pointer;">? How do I find my IP?</span>
+            </label>
+            <input type="text" name="target" id="target_input" placeholder="e.g. 192.168.1.5" value="{{ detected_ip or '' }}">
+
+            <!-- IP help panel — hidden by default -->
+            <div id="ip_help_panel" style="display:none; background:#0d1a0d; border:1px solid #1a3a1a; border-radius:6px; padding:16px; margin-top:8px; font-size:0.85em;">
+                <div style="color:#66bb66; font-weight:bold; margin-bottom:10px;">How to find your IP address</div>
+
+                <div style="margin-bottom:12px;">
+                    <div style="color:#e0e0e0; font-weight:bold; margin-bottom:4px;">🪟 Windows</div>
+                    <ol style="color:#aaa; margin:0; padding-left:20px; line-height:1.8;">
+                        <li>Press the <strong style="color:#e0e0e0;">Windows key + R</strong> at the same time</li>
+                        <li>Type <strong style="color:#00bfff;">cmd</strong> and press Enter</li>
+                        <li>In the black window, type <strong style="color:#00bfff;">ipconfig</strong> and press Enter</li>
+                        <li>Look for <strong style="color:#e0e0e0;">IPv4 Address</strong> — it starts with 192.168 or 10.</li>
+                        <li>Copy that number and paste it here</li>
+                    </ol>
+                </div>
+
+                <div style="margin-bottom:12px;">
+                    <div style="color:#e0e0e0; font-weight:bold; margin-bottom:4px;">🍎 Mac</div>
+                    <ol style="color:#aaa; margin:0; padding-left:20px; line-height:1.8;">
+                        <li>Click the <strong style="color:#e0e0e0;">Apple menu</strong> (top left) → System Settings</li>
+                        <li>Click <strong style="color:#e0e0e0;">Wi-Fi</strong> (or Network)</li>
+                        <li>Click <strong style="color:#e0e0e0;">Details</strong> next to your connected network</li>
+                        <li>Your IP address is shown — it starts with 192.168 or 10.</li>
+                        <li>Copy that number and paste it here</li>
+                    </ol>
+                </div>
+
+                <div>
+                    <div style="color:#e0e0e0; font-weight:bold; margin-bottom:4px;">🐧 Linux</div>
+                    <ol style="color:#aaa; margin:0; padding-left:20px; line-height:1.8;">
+                        <li>Open a terminal</li>
+                        <li>Type <strong style="color:#00bfff;">hostname -I</strong> and press Enter</li>
+                        <li>The first number shown is your IP address</li>
+                        <li>Copy that number and paste it here</li>
+                    </ol>
+                </div>
+
+                <div style="margin-top:12px; padding-top:10px; border-top:1px solid #1a3a1a; color:#666; font-size:0.8em;">
+                    💡 Tip: If Recon AI detected your IP automatically above, you probably don't need to change anything. Just hit Run Scan.
+                </div>
+            </div>
+        </div>
 
         <label style="margin-top:16px; display:block; color:#aaa; font-size:0.9em;">Select Tools to Run</label>
         <div class="tool-grid" id="toolGrid">
@@ -361,6 +487,176 @@
             document.getElementById('depth_' + value).checked = true;
             document.getElementById('deepScanWarning').style.display = value === 'deep' ? 'block' : 'none';
         }
+
+        // ── Welcome banner — localStorage tracking ──────────────────────────────
+        function showWelcomeIfNew() {
+            try {
+                if (!localStorage.getItem('recon_ai_welcomed')) {
+                    document.getElementById('welcomeBanner').style.display = 'block';
+                }
+            } catch (e) {
+                // localStorage unavailable (incognito) — show banner anyway
+                document.getElementById('welcomeBanner').style.display = 'block';
+            }
+        }
+
+        function dismissWelcome() {
+            document.getElementById('welcomeBanner').style.display = 'none';
+            try {
+                localStorage.setItem('recon_ai_welcomed', '1');
+            } catch (e) {
+                // localStorage unavailable — banner will show again next time, that's fine
+            }
+        }
+
+        // ── IP help panel toggle ────────────────────────────────────────────────
+        function toggleIPHelp() {
+            const panel = document.getElementById('ip_help_panel');
+            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+        }
+
+        // ── Intent selector — three-button scan UX ─────────────────────────────
+        function selectIntent(intent) {
+            // Clear all selections
+            document.querySelectorAll('.intent-btn').forEach(btn => {
+                btn.style.borderColor = '#333';
+                btn.style.background = '#1a1a1a';
+            });
+
+            // Highlight selected
+            const selected = document.getElementById('intent_' + intent);
+            selected.style.borderColor = '#00bfff';
+            selected.style.background = '#0d1f2d';
+
+            const input = document.getElementById('target_input');
+            const detectedIP = '{{ detected_ip or "" }}';
+
+            if (intent === 'this') {
+                // Auto-fill with detected IP
+                input.value = detectedIP || '';
+                input.placeholder = detectedIP ? detectedIP : 'Your IP (could not auto-detect)';
+                document.getElementById('ip_input_section').style.display = 'block';
+            } else if (intent === 'network') {
+                // Auto-fill with subnet based on detected IP
+                if (detectedIP) {
+                    const parts = detectedIP.split('.');
+                    if (parts.length === 4) {
+                        input.value = parts[0] + '.' + parts[1] + '.' + parts[2] + '.0/24';
+                    }
+                }
+                document.getElementById('ip_input_section').style.display = 'block';
+            } else if (intent === 'specific') {
+                // Clear and let user type
+                input.value = '';
+                input.placeholder = 'e.g. 192.168.1.5';
+                document.getElementById('ip_input_section').style.display = 'block';
+                input.focus();
+            }
+        }
+
+        // ── Scan loading state ───────────────────────────────────────────────
+        function showScanLoading() {
+            const overlay = document.createElement('div');
+            overlay.id = 'scan_loading_overlay';
+            overlay.style.cssText = `
+                position: fixed;
+                top: 0; left: 0; right: 0; bottom: 0;
+                background: rgba(10, 10, 10, 0.92);
+                z-index: 9999;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                font-family: Arial, sans-serif;
+            `;
+            overlay.innerHTML = `
+                <div style="text-align:center; max-width:400px; padding:20px;">
+                    <div style="font-size:2.5em; margin-bottom:16px;">⚡</div>
+                    <div style="color:#00bfff; font-size:1.2em; font-weight:bold; margin-bottom:8px;">
+                        I'm scanning your network
+                    </div>
+                    <div style="color:#888; font-size:0.9em; margin-bottom:28px; line-height:1.6;">
+                        This usually takes 30–60 seconds.<br>
+                        I'll show you everything I find when I'm done.
+                    </div>
+                    <div style="background:#1a1a1a; border-radius:6px; height:6px; width:100%; overflow:hidden; margin-bottom:20px;">
+                        <div id="scan_progress_bar" style="
+                            height:100%;
+                            width:0%;
+                            background: linear-gradient(90deg, #00bfff, #0088cc);
+                            border-radius:6px;
+                            transition: width 0.5s ease;
+                        "></div>
+                    </div>
+                    <div id="scan_status_msg" style="color:#555; font-size:0.8em; font-family:monospace;">
+                        Starting scan...
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+
+            const messages = [
+                'Checking open ports...',
+                'Mapping your network...',
+                'Checking credentials...',
+                'Analyzing log files...',
+                'Running vulnerability checks...',
+                'Checking for shadow AI tools...',
+                'Running Zero Trust verification...',
+                'Building your security report...',
+                'Almost done...',
+            ];
+
+            let progress = 0;
+            let msgIndex = 0;
+            const bar = document.getElementById('scan_progress_bar');
+            const msg = document.getElementById('scan_status_msg');
+
+            const interval = setInterval(function() {
+                if (progress < 30) {
+                    progress += 3;
+                } else if (progress < 60) {
+                    progress += 1.5;
+                } else if (progress < 85) {
+                    progress += 0.5;
+                } else if (progress < 93) {
+                    progress += 0.1;
+                }
+                if (bar) bar.style.width = Math.min(progress, 93) + '%';
+                if (msg && msgIndex < messages.length) {
+                    if (progress > (msgIndex + 1) * 10) {
+                        msg.textContent = messages[msgIndex];
+                        msgIndex++;
+                    }
+                }
+            }, 500);
+
+            window._scanInterval = interval;
+        }
+
+        // Run on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            showWelcomeIfNew();
+            // If IP was auto-detected, pre-select "This machine"
+            const detectedIP = '{{ detected_ip or "" }}';
+            if (detectedIP) {
+                selectIntent('this');
+            }
+
+            const form = document.querySelector('form[action="/scan"]');
+            if (form) {
+                form.addEventListener('submit', function() {
+                    showScanLoading();
+                });
+            }
+
+            const shadowForm = document.querySelector('form[action="/shadow-ai-scan"]');
+            if (shadowForm) {
+                shadowForm.addEventListener('submit', function() {
+                    showScanLoading();
+                });
+            }
+        });
     </script>
 </body>
 </html>
