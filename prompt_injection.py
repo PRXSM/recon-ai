@@ -6,8 +6,8 @@ Sanitizes all scan data before it reaches the Claude AI layer.
 Three defense layers:
 1. Length truncation — caps any single field to prevent context flooding
 2. Pattern detection — neutralizes known injection phrases and patterns
-3. Encoding normalization — strips obfuscation via unusual unicode,
-   zero-width characters, and homoglyph attacks
+3. Encoding normalization — strips zero-width characters, BIDI control
+   characters, and homoglyph attacks (via NFKC normalization)
 
 Detected injection attempts are logged as HIGH severity security
 findings — evidence that someone on the network is actively trying
@@ -52,7 +52,10 @@ INJECTION_PATTERNS = [
     r"suppress\s+(all\s+)?(warning|alert|finding)",
 ]
 
-ZERO_WIDTH_CHARS = [
+# Covers both zero-width invisibles and BIDI control characters.
+# BIDI overrides (especially U+202E RTLO) are used to reverse displayed text
+# and hide injection payloads from visual inspection.
+STRIPPED_CHARS = [
     '\u200b',  # zero width space
     '\u200c',  # zero width non-joiner
     '\u200d',  # zero width joiner
@@ -61,6 +64,15 @@ ZERO_WIDTH_CHARS = [
     '\ufeff',  # zero width no-break space
     '\u2060',  # word joiner
     '\u00ad',  # soft hyphen
+    '\u202a',  # left-to-right embedding
+    '\u202b',  # right-to-left embedding
+    '\u202c',  # pop directional formatting
+    '\u202d',  # left-to-right override
+    '\u202e',  # right-to-left override (RTLO \u2014 main BIDI attack character)
+    '\u2066',  # left-to-right isolate
+    '\u2067',  # right-to-left isolate
+    '\u2068',  # first strong isolate
+    '\u2069',  # pop directional isolate
 ]
 
 
@@ -68,8 +80,16 @@ def sanitize(text, field_name="field", source="unknown"):
     """
     Main sanitization function. Applies all three defense layers to
     a single string field before it enters the AI summary. Returns
-    a tuple of (cleaned_text, injection_finding_or_None). If an
-    injection attempt is detected, the second element is a finding
+    a tuple of (cleaned_text, injection_finding_or_None).
+
+    Defense layers:
+    1. BIDI and zero-width stripping — removes invisible characters and
+       BIDI override characters used to hide or reverse injection payloads.
+    2. NFKC normalization — converts homoglyphs (Cyrillic/Greek lookalikes)
+       to ASCII equivalents, defeating substitution-based evasion.
+    3. Pattern detection — neutralizes known injection phrases.
+
+    If an injection attempt is detected, the second element is a finding
     dict describing the attempt — it is the caller's responsibility
     to collect and surface these findings.
     """
@@ -80,8 +100,10 @@ def sanitize(text, field_name="field", source="unknown"):
         return ("", None)
 
     # Step 2 — encoding normalization
-    for char in ZERO_WIDTH_CHARS:
+    for char in STRIPPED_CHARS:
         text = text.replace(char, "")
+    # NFKC normalization converts homoglyphs (Cyrillic/Greek lookalikes)
+    # to ASCII equivalents before pattern matching.
     text = unicodedata.normalize("NFKC", text)
     text = text.strip()
 

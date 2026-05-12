@@ -112,7 +112,7 @@ Labels: **GOOD** (80–100) / **MODERATE** (60–79) / **AT RISK** (40–59) / *
 
 ## Current Development Phase
 
-Phase 12 (next): Zero Trust Verification. Phases 1–11 complete. See roadmap for full phase history.
+Phase 14 in progress. Phases 1–13 complete.
 
 ## Brand Voice — Recon AI speaks in first person
 

@@ -159,6 +159,34 @@
                     {% endfor %}
                 </div>
                 {% endif %}
+
+                {# SSL certificate — only if present #}
+                {% if finding.ssl_cert is defined and finding.ssl_cert %}
+                {% set cert = finding.ssl_cert %}
+                <div style="background:#0a0a14; border:1px solid #1a1a2a; border-radius:6px; padding:8px 12px; margin-top:6px;">
+                    <div style="color:#00bfff; font-size:0.72em; font-weight:bold; margin-bottom:4px;">
+                        SSL CERTIFICATE
+                    </div>
+                    {% if cert.expired %}
+                    <div style="color:#ff4444; font-size:0.8em; font-weight:bold;">
+                        ⚠ Expired — this certificate is no longer valid.
+                    </div>
+                    {% elif cert.expiring_soon %}
+                    <div style="color:#ffaa00; font-size:0.8em; font-weight:bold;">
+                        ⚠ Expiring soon — {{ cert.days_remaining }} days remaining.
+                    </div>
+                    {% else %}
+                    <div style="color:#44cc77; font-size:0.8em;">
+                        ✓ Valid — {{ cert.days_remaining }} days remaining.
+                    </div>
+                    {% endif %}
+                    {% if cert.expiry_date %}
+                    <div style="color:#444; font-size:0.75em; margin-top:2px;">
+                        Expires: {{ cert.expiry_date.strftime('%Y-%m-%d') if cert.expiry_date else 'Unknown' }}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
             </div>
             {% endfor %}
         </div>

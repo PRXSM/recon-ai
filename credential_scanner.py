@@ -14,6 +14,7 @@ Recon AI observes and reports only. The user decides what to do.
 """
 
 import re
+import socket
 
 try:
     import requests
@@ -583,6 +584,81 @@ ADMIN_PORTS = {
 }
 
 
+def check_snmp_defaults(ip):
+    """
+    Sends a minimal SNMP GET request to port 161 using the community strings
+    'public' and 'private'. If either is accepted, the device has default
+    SNMP credentials and exposes full system information to anyone on the
+    network.
+
+    Uses a 2-second timeout — never blocks the scan. Returns None if port
+    161 is not responding. This is read-only — SNMP GET requests never
+    modify any device configuration.
+    """
+    # Minimal SNMPv1 GET request for sysDescr (OID 1.3.6.1.2.1.1.1.0)
+    # Encoded as a raw packet — no external library required.
+    def _build_snmp_get(community):
+        def _encode_length(n):
+            if n < 128:
+                return bytes([n])
+            return bytes([0x81, n]) if n < 256 else bytes([0x82, n >> 8, n & 0xff])
+
+        community_bytes = community.encode()
+        # OID: 1.3.6.1.2.1.1.1.0
+        oid = bytes([0x06, 0x08, 0x2b, 0x06, 0x01, 0x02, 0x01, 0x01, 0x01, 0x00])
+        # Null value
+        null_val = bytes([0x05, 0x00])
+        # VarBind
+        varbind = bytes([0x30]) + _encode_length(len(oid) + len(null_val)) + oid + null_val
+        # VarBindList
+        varbind_list = bytes([0x30]) + _encode_length(len(varbind)) + varbind
+        # GetRequest PDU (type 0xa0)
+        pdu_inner = bytes([0x02, 0x01, 0x01,   # request-id = 1
+                           0x02, 0x01, 0x00,   # error-status = 0
+                           0x02, 0x01, 0x00])  # error-index = 0
+        pdu_inner += varbind_list
+        pdu = bytes([0xa0]) + _encode_length(len(pdu_inner)) + pdu_inner
+        # Community string
+        comm = bytes([0x04]) + _encode_length(len(community_bytes)) + community_bytes
+        # Version (SNMPv1 = 0)
+        ver = bytes([0x02, 0x01, 0x00])
+        # Sequence
+        msg_inner = ver + comm + pdu
+        return bytes([0x30]) + _encode_length(len(msg_inner)) + msg_inner
+
+    for community in ("public", "private"):
+        try:
+            packet = _build_snmp_get(community)
+            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            sock.settimeout(2)
+            sock.sendto(packet, (ip, 161))
+            data, _ = sock.recvfrom(1024)
+            sock.close()
+            if data and len(data) > 2:
+                return {
+                    "ip": ip,
+                    "port": 161,
+                    "service": "SNMP",
+                    "risk": "CRITICAL",
+                    "description": (
+                        f"I confirmed that the default SNMP community string "
+                        f"'{community}' is accepted on this device. Anyone on your "
+                        f"network can query it for system information — device name, "
+                        f"OS version, network interfaces, and more."
+                    ),
+                    "fix": (
+                        "Change the SNMP community strings from the defaults to "
+                        "something long and random. If you don't use SNMP, disable "
+                        "it entirely in this device's admin panel. Consider upgrading "
+                        "to SNMPv3, which supports real authentication and encryption."
+                    ),
+                }
+        except Exception:
+            continue
+
+    return None
+
+
 def check_insecure_protocols(ip, open_ports):
     """
     Check if any open ports match known insecure protocols.
@@ -610,6 +686,9 @@ def check_default_credentials(ip, open_ports):
     Reports only whether a default credential was accepted. Never stores,
     logs, or transmits any credential. Runs only on networks the user has
     confirmed they own via the authorization checkbox.
+    Never follows redirects from scanned devices — redirects are disallowed
+    to prevent SSRF-class attacks where a device could redirect the scanner
+    to an internal or external target.
     Returns a list of finding dicts.
     """
     if not REQUESTS_AVAILABLE:
@@ -631,7 +710,7 @@ def check_default_credentials(ip, open_ports):
                     url,
                     auth=(username, password),
                     timeout=3,
-                    allow_redirects=True,
+                    allow_redirects=False,  # SSRF guard — do not follow redirects from scanned devices
                     verify=False,
                 )
                 if response.status_code == 200:
@@ -796,7 +875,13 @@ def run_credential_assessment(live_hosts, open_ports):
         admin_findings = check_admin_exposure(ip, parsed_ports)
         credential_findings = check_default_credentials(ip, parsed_ports)
 
-        for finding in protocol_findings + admin_findings + credential_findings:
+        snmp_findings = []
+        if 161 in parsed_ports:
+            snmp_result = check_snmp_defaults(ip)
+            if snmp_result:
+                snmp_findings = [snmp_result]
+
+        for finding in protocol_findings + admin_findings + credential_findings + snmp_findings:
             key = (finding["ip"], finding["port"], finding["service"])
             if key not in reported_keys:
                 all_findings.append(finding)

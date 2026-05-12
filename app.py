@@ -1,5 +1,9 @@
 from flask import Flask, render_template, request, send_file
+from flask_talisman import Talisman
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 import io
+import ipaddress
 from engine import build_scan_summary, calculate_risk_score, get_risk_label, parse_port_number
 from ai_assistant import analyze_with_ai
 from ai_agents import run_agent_analysis
@@ -17,7 +21,7 @@ from network_intel import (
 )
 from scan_memory import (
     save_scan, get_last_scan,
-    get_new_devices, init_db
+    get_new_devices, get_port_changes, init_db
 )
 from device_fingerprint import fingerprint_device
 from system_inspector import run_system_inspection
@@ -25,6 +29,7 @@ from credential_scanner import run_credential_assessment
 from shadow_ai import run_shadow_ai_scan
 from nist_owasp import map_findings, generate_compliance_summary
 from zero_trust import run_zero_trust
+from firewall_check import run_firewall_check
 from dotenv import load_dotenv
 import datetime
 import logging
@@ -37,7 +42,43 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
 app = Flask(__name__)
+
+# Flask-Talisman adds HTTP security headers. CSP is disabled for v1 due to
+# inline scripts — will be tightened in Phase 16.
+Talisman(app,
+    force_https=False,           # local dev — no HTTPS enforcement locally
+    content_security_policy=False,  # CSP disabled — too strict for inline scripts in results.html
+    frame_options="DENY",        # blocks clickjacking
+)
+
+limiter = Limiter(
+    get_remote_address,
+    app=app,
+    default_limits=[],
+    storage_uri="memory://"
+)
+
 init_db()
+
+
+def is_private_ip(host):
+    """
+    Returns True only if host is a valid IPv4 address in an RFC 1918 private
+    range. Returns False for hostnames, loopback addresses, link-local
+    addresses (169.254.x.x which includes cloud metadata endpoints), and
+    any public IP.
+
+    Used to restrict the /traceroute route to private network addresses only,
+    preventing SSRF attacks via crafted host values.
+    """
+    try:
+        ip = ipaddress.IPv4Address(host)
+        if ip.is_loopback or ip.is_link_local:
+            return False
+        return ip.is_private
+    except ValueError:
+        return False
+
 
 # input validation
 def is_valid_ip(ip):
@@ -194,6 +235,7 @@ def index():
     return render_template("index.html")
 
 @app.route("/scan", methods=["POST"])
+@limiter.limit("10 per minute")  # Rate limited — prevents abuse on hosted version.
 def scan():
     ip = request.form.get("target", "").strip()
     tools = request.form.getlist("tools")   # list of checked tool values
@@ -361,8 +403,28 @@ def scan():
         current_devices = report_data.get("live_hosts", [])
         new_devices = get_new_devices(current_devices, ip)
 
+    # Port change alerting — diff open ports against last scan
+    port_changes = []
+    if needs_target and ip:
+        current_open = report_data.get("open_ports", [])
+        port_changes = get_port_changes(current_open, ip) if ip else []
+        if port_changes:
+            new_port_nums = [str(c["port"]) for c in port_changes]
+            logger.warning(
+                f"port_changes: new ports detected on {ip}: {', '.join(new_port_nums)}"
+            )
+    report_data["port_changes"] = port_changes
+
     # Save this scan to memory
     save_scan(report_data, ip, timestamp)
+
+    # Firewall status — always run, local and fast
+    firewall_status = None
+    try:
+        firewall_status = run_firewall_check()
+    except Exception as e:
+        logger.error(f"Firewall check failed: {e}")
+    report_data["firewall_status"] = firewall_status
 
     # AI Analysis
     ai_analysis = None
@@ -424,7 +486,9 @@ def scan():
         mapped_findings=report_data.get("mapped_findings", []),
         compliance=report_data.get("compliance"),
         zero_trust=report_data.get("zero_trust"),
-        agent_result=agent_result)
+        agent_result=agent_result,
+        port_changes=port_changes,
+        firewall_status=firewall_status)
 
 @app.route("/network-intel")
 def network_intel():
@@ -473,9 +537,12 @@ def netstat():
 
 @app.route("/traceroute")
 def traceroute_view():
-    host = request.args.get("host", "8.8.8.8").strip()
+    host = request.args.get("host", "192.168.1.1").strip()
     if not re.match(r'^[a-zA-Z0-9.\-]+$', host):
-        host = "8.8.8.8"
+        host = "192.168.1.1"
+    if not is_private_ip(host):
+        logger.warning(f"traceroute: rejected non-private host {host!r}, using default")
+        host = "192.168.1.1"
     hops, error = run_traceroute(host)
     exps        = [explain_hop(h) for h in hops]
     return render_template("traceroute.html",
@@ -485,6 +552,10 @@ def traceroute_view():
 @app.route("/download-report", methods=["POST"])
 def download_report():
     report_text = request.form.get("report_text", "")
+    MAX_REPORT_CHARS = 500_000  # ~500KB plain text ceiling
+    if len(report_text) > MAX_REPORT_CHARS:
+        report_text = report_text[:MAX_REPORT_CHARS] + "\n\n[Report truncated at 500,000 characters]"
+        logger.warning("download-report: report truncated at MAX_REPORT_CHARS limit")
     timestamp = request.form.get("timestamp", datetime.datetime.now().isoformat())
     safe_ts = timestamp.replace(":", "-").replace(".", "-")
     buffer = io.BytesIO(report_text.encode("utf-8"))
@@ -497,6 +568,7 @@ def download_report():
     )
 
 @app.route("/shadow-ai-scan", methods=["POST"])
+@limiter.limit("5 per minute")  # Rate limited — prevents abuse on hosted version.
 def shadow_ai_scan():
     authorized = request.form.get("authorized")
     if not authorized:
@@ -507,6 +579,17 @@ def shadow_ai_scan():
     if not is_valid_ip(ip):
         return render_template("index.html",
             error="Invalid IP address. Please enter a valid IPv4 address.")
+
+    if "/" in ip:
+        try:
+            network = ipaddress.ip_network(ip, strict=False)
+            if network.num_addresses > 256:
+                logger.warning(f"shadow-ai-scan: rejected oversized subnet {ip!r}")
+                return render_template("index.html",
+                    error="I can only scan subnets of /24 or smaller (up to 254 devices). Please enter a more specific subnet.")
+        except ValueError:
+            return render_template("index.html",
+                error="Invalid subnet. Please enter a valid IPv4 address or CIDR range.")
 
     try:
         live_hosts = scan_subnet(ip)

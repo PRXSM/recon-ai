@@ -59,30 +59,40 @@ Recon AI runs locally on your machine — which means it has access to things no
 
 | Tool | What It Does | Status |
 |---|---|---|
-| **Port Scanner** | Scans ports 1–1024. Finds every open door on your network and identifies what's running behind it. | ✅ Complete |
-| **Network Mapper** | Discovers every live device on your subnet. Useful question: is everything on this list supposed to be here? | ✅ Complete |
-| **Log Analyzer** | Reads your system logs and flags 30+ threat patterns — brute force attempts, privilege escalation, ransomware indicators, crypto mining, and more. | ✅ Complete |
-| **Vulnerability Reporter** | Takes the open ports and cross-references them against known risks. Also factors in what the log analyzer found. | ✅ Complete |
-| **AI Security Assistant** | Sends your findings to Claude and gets back a plain-English breakdown — every finding gets EXPLAIN → RISK → FIX → VERIFY. | ✅ Complete |
-| **Network Intelligence** | Maps your interfaces, ARP table, active connections, and traceroute in plain English. | ✅ Complete |
-| **System Inspector** | Scans running processes and startup items for anything suspicious. Flags by exact name — no false positives. | ✅ Complete |
-| **Credential Risk Assessment** | Checks every discovered device for weak authentication, default credentials, and missing MFA. | ✅ Complete |
-| **Shadow AI Discovery** | Detects unauthorized or hidden AI tools running across your local network — by port, banner signature, and API fingerprint. | ✅ Complete |
+| **Port Scanner** | Scans ports 1–1024 (simple) or all 65,535 (deep). Finds every open door and identifies what's running behind it. | ✅ Complete |
+| **Network Mapper** | Discovers every live device on your subnet. MAC vendor lookup via IEEE OUI database. Unknown device alerts. | ✅ Complete |
+| **Log Analyzer** | Reads system logs and flags 30+ threat patterns — brute force, ransomware indicators, privilege escalation, crypto mining. | ✅ Complete |
+| **Vulnerability Reporter** | Maps open ports to known vulnerabilities with severity ratings and plain English fix instructions. | ✅ Complete |
+| **AI Security Assistant** | Three modes — Standard (Claude API), Private (local Ollama, zero data leaves), Offline (built-in, always free). EXPLAIN→RISK→FIX→VERIFY for every finding. | ✅ Complete |
+| **Network Intelligence** | Interfaces, ARP table, active connections, and traceroute — all explained in plain English. Always free, never gated. | ✅ Complete |
+| **System Inspector** | Scans running processes and startup items. Exact binary name matching — no false positives. Cross-platform. | ✅ Complete |
+| **Credential Risk Assessment** | Checks every discovered device for weak auth, default credentials, and missing MFA. | ✅ Complete |
+| **Shadow AI Discovery** | Detects unauthorized AI tools running across your local network — by port, banner signature, and API fingerprint. SSL cert checking on HTTPS services. | ✅ Complete |
+| **NIST & OWASP Mapping** | Every finding automatically mapped to the NIST Cybersecurity Framework and OWASP Top 10. Plain English compliance summary. | ✅ Complete |
+| **Zero Trust Verification** | Detects implicit device trust, new devices by MAC address, and guest devices with internal access. | ✅ Complete |
+| **Prompt Injection Hardening** | Four-layer sanitizer protects Recon AI's own AI layer from adversarial inputs embedded in scan results. | ✅ Complete |
+| **Multi-Agent AI** | Adversary Agent challenges every finding before you see it. Risk Prioritizer identifies your single most important action. Standard and Private modes only. | ✅ Complete |
 
 ---
 
 ## What's Actually In Here
 
-- 🌐 **Runs in your browser** — Flask web interface, no command line needed
+- 🌐 **Runs in your browser** — Flask web interface, no command line needed after setup
 - 📖 **Built-in assistant, no API key needed** — explains every finding offline, zero data sent anywhere
 - 🧠 **Optional AI analysis** — Claude gives a deeper, more personalized breakdown when you want it
 - 🔒 **Three AI modes** — Standard (Claude API), Private (local Ollama, zero data leaves your machine), Offline (built-in knowledge base, always free)
-- 📊 **Network health score** — a 0–100 score so you know at a glance how things look
-- 📄 **Downloadable reports** — every scan can be saved as a .txt file
-- 🛡️ **Your IP never leaves your machine** — redacted before anything gets sent to Claude
-- 🔗 **Cross-tool logic** — if the log analyzer finds brute force attempts and the port scanner finds SSH open, the vulnerability reporter escalates the severity automatically
-- 🤖 **Shadow AI Detection** — finds AI tools running on your network that you didn't authorize
-- 🖥️ **macOS, Windows, Linux** — runs on all three
+- 🤖 **Multi-agent adversarial review** — findings are challenged by an Adversary Agent before you see them. A Risk Prioritizer tells you the one most important action to take.
+- 📊 **Network Health Score** — 0–100 score so you know at a glance how your network looks
+- 🛡️ **Prompt injection protection** — four-layer sanitizer prevents adversarial inputs in device names or log files from manipulating the AI
+- 🏛️ **NIST & OWASP compliance mapping** — every finding mapped automatically, explained in plain English
+- 🔍 **Zero Trust verification** — detects implicit device trust and unknown devices by MAC address
+- 🚨 **Port change alerting** — alerts when a known device opens a new port since your last scan
+- 🔥 **Firewall status check** — tells you if your local firewall is on or off in plain English
+- 🔐 **ARP poisoning detection** — flags when a device's MAC address changes between scans
+- 📜 **SSL certificate checker** — checks HTTPS services for expired or expiring certificates
+- 📄 **Downloadable reports** — every scan saved as a .txt file
+- 🛡️ **Security hardened** — SSRF protection, rate limiting, HTTP security headers, SQLite WAL mode
+- 🖥️ **macOS, Windows, Linux** — cross-platform
 
 ---
 
@@ -92,11 +102,13 @@ Recon AI runs locally on your machine — which means it has access to things no
 |---|---|
 | Python 3 | All scanning tools |
 | Flask | Web interface |
+| Flask-Talisman | HTTP security headers |
+| Flask-Limiter | Rate limiting |
 | Claude API | AI analysis (optional) |
 | Ollama | Local AI inference for Private Mode |
-| SQLite | Scan memory and device tracking |
+| SQLite | Scan history and device tracking |
 | python-dotenv | API key management |
-| Standard library | `socket`, `subprocess`, `re`, `ipaddress`, `platform`, `pathlib` |
+| Standard library | `socket`, `subprocess`, `re`, `ipaddress`, `ssl`, `platform`, `pathlib` |
 
 ---
 
@@ -132,27 +144,34 @@ python3 app.py
 
 ```
 recon-ai/
-├── app.py                     # Flask routes and web interface
+├── app.py                     # Flask routes, validation, security hardening
 ├── engine.py                  # Risk scoring, scan summary, report builder
-├── port_scanner.py            # TCP port scanner (ports 1–1024)
-├── network_mapper.py          # Ping-based host discovery
+├── port_scanner.py            # TCP port scanner (simple 1–1024, deep 65,535)
+├── network_mapper.py          # Ping-based host discovery, MAC vendor lookup
 ├── log_analyzer.py            # 30+ threat pattern detection
-├── vulnerability_reporter.py  # Port → vulnerability database + cross-tool correlation
-├── ai_assistant.py            # Claude API integration
-├── plain_english.py           # Offline knowledge base for common port findings
+├── vulnerability_reporter.py  # Port → vulnerability database
+├── ai_assistant.py            # Claude API integration, three AI modes
+├── ai_agents.py               # Adversary Agent + Risk Prioritizer
+├── plain_english.py           # Offline knowledge base
 ├── network_intel.py           # Network Intelligence engine
 ├── system_inspector.py        # Suspicious process and startup item scanner
-├── credential_scanner.py      # Credential risk assessment across discovered devices
-├── shadow_ai.py               # Shadow AI discovery — detects unauthorized AI tools
-├── scan_memory.py             # Local scan history and unknown device tracking
-├── device_fingerprint.py      # MAC vendor lookup and device identification
+├── credential_scanner.py      # Credential risk assessment
+├── shadow_ai.py               # Shadow AI discovery + SSL cert checker
+├── nist_owasp.py              # NIST & OWASP compliance mapping
+├── zero_trust.py              # Zero Trust verification
+├── prompt_injection.py        # Four-layer prompt injection sanitizer
+├── firewall_check.py          # Local firewall status check
+├── scan_memory.py             # Scan history, port change alerting, ARP poisoning detection
+├── device_fingerprint.py      # MAC vendor lookup via IEEE OUI database
 ├── templates/
 │   ├── index.html             # Scan form
 │   ├── results.html           # Results display
+│   ├── shadow_ai.html         # Shadow AI findings display
 │   ├── network_intel.html     # Network Intelligence dashboard
 │   ├── arp_table.html         # ARP table explained
 │   ├── netstat.html           # Active connections explained
 │   └── traceroute.html        # Route tracing explained
+├── oui.csv                    # IEEE OUI database for MAC vendor lookup
 ├── .env.example               # API key template
 ├── requirements.txt
 └── README.md
@@ -189,10 +208,12 @@ Deductions: -2 per open port, up to -20 per critical vulnerability, up to -10 pe
 | ✅ | Phase 8 — System Inspector, process scanner, startup item analyzer | Complete |
 | ✅ | Phase 9 — Credential Risk Assessment, default creds, missing MFA detection | Complete |
 | ✅ | Phase 10 — Shadow AI Discovery, unauthorized AI tool detection by port and banner | Complete |
-| 🔨 | Phase 11 — NIST & OWASP Mapping | Next |
-| 📋 | Phase 12 — Zero Trust Verification | Planned |
-| 📋 | Phase 13 — Prompt Injection Hardening | Planned |
-| 📋 | Phase 14 — App Complete Milestone | Planned |
+| ✅ | Phase 11 — NIST & OWASP Mapping, automatic compliance correlation | Complete |
+| ✅ | Phase 12 — Zero Trust Verification, never trust always verify | Complete |
+| ✅ | Phase 13 — Prompt Injection Hardening, four-layer AI sanitizer | Complete |
+| ✅ | Phase 13b — Multi-Agent AI, Adversary Agent + Risk Prioritizer | Complete |
+| ✅ | Phase 14 — App Complete Milestone, full security audit and hardening | Complete |
+| ✅ | Phase 14b — Post-audit hardening, four targeted security fixes | Complete |
 | 📋 | Phase 15 — UI Redesign | Planned |
 | 📋 | Phase 16 — Deploy Online | Planned |
 | 📋 | Phase 17 — Business Model | Planned |
@@ -228,6 +249,6 @@ That's who every decision in this project is built around.
 
 ## Built By
 
-**Asama Azim** — IT & Cybersecurity | Network+ Certified | Security+ in progress
+**Asama Azim** — IT & Cybersecurity | CompTIA Network+ Certified | Security+ in progress
 
 [GitHub](https://github.com/PRXSM) | [LinkedIn](https://linkedin.com/in/asama-azim-38a0b391)

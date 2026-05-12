@@ -15,12 +15,15 @@ Recon AI advises. The user decides.
 """
 
 import socket
+import ssl
 import logging
 import requests
 from concurrent.futures import ThreadPoolExecutor, as_completed
+import datetime
 
 logger = logging.getLogger(__name__)
 
+# Note: port 5000 intentionally excluded — Recon AI runs on 5000 and would flag itself.
 AI_PORTS = {
     11434: {
         "name": "Ollama",
@@ -135,16 +138,23 @@ def check_port(ip, port, timeout=1):
 
 def check_banner(ip, port):
     """
-    Makes an HTTP GET to ip:port and returns the response text if successful.
+    Makes an HTTP GET to ip:port and returns up to 50KB of response text.
+
+    Two protections applied:
+    - allow_redirects=False: stops Recon AI from following redirects from
+      network devices, which is a known SSRF vector.
+    - 50KB response cap: prevents a malicious device from exhausting memory
+      by serving a huge response.
+
     Returns None on any failure.
     """
     try:
         response = requests.get(
             f"http://{ip}:{port}/",
             timeout=3,
-            allow_redirects=True,
+            allow_redirects=False,
         )
-        return response.text
+        return response.content[:50000].decode("utf-8", errors="ignore")
     except Exception:
         return None
 
@@ -153,12 +163,57 @@ def check_ollama_api(ip, port):
     """
     Checks Ollama's /api/tags endpoint to get the actual model names running.
     Returns a list of model name strings, or None if not Ollama.
+    Caps response at 50 KB — oversized responses are discarded to prevent
+    memory exhaustion from a malicious device.
     """
     try:
         r = requests.get(f"http://{ip}:{port}/api/tags", timeout=3)
         if r.status_code == 200:
+            if len(r.content) > 50000:
+                logger.warning(
+                    f"check_ollama_api: oversized response from {ip}:{port} "
+                    f"({len(r.content)} bytes) — skipping"
+                )
+                return None
             data = r.json()
             return [m["name"] for m in data.get("models", [])]
+    except Exception:
+        return None
+
+
+def check_ssl_cert(ip, port):
+    """
+    Attempts an SSL handshake on the given port and inspects the certificate.
+    Uses only Python's built-in ssl and socket modules — no new dependencies.
+
+    Returns a dict with:
+        valid (bool), expiry_date (datetime or None), days_remaining (int or None),
+        expired (bool), expiring_soon (bool — True if days_remaining < 30)
+
+    Returns None silently on any error.
+    """
+    try:
+        ctx = ssl.create_default_context()
+        ctx.check_hostname = False
+        ctx.verify_mode = ssl.CERT_NONE
+        with socket.create_connection((ip, port), timeout=3) as raw:
+            with ctx.wrap_socket(raw, server_hostname=ip) as ssock:
+                cert = ssock.getpeercert()
+        if not cert:
+            return None
+        not_after = cert.get("notAfter")
+        if not not_after:
+            return None
+        expiry = datetime.datetime.strptime(not_after, "%b %d %H:%M:%S %Y %Z")
+        now = datetime.datetime.utcnow()
+        days_remaining = (expiry - now).days
+        return {
+            "valid": True,
+            "expiry_date": expiry,
+            "days_remaining": days_remaining,
+            "expired": days_remaining < 0,
+            "expiring_soon": 0 <= days_remaining < 30,
+        }
     except Exception:
         return None
 
@@ -205,6 +260,11 @@ def scan_device(ip):
             models = check_ollama_api(ip, port)
             if models is not None:
                 finding["ollama_models"] = models
+
+        if port in (443, 8443):
+            cert = check_ssl_cert(ip, port)
+            if cert is not None:
+                finding["ssl_cert"] = cert
 
         findings.append(finding)
 

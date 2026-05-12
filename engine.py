@@ -230,6 +230,11 @@ def calculate_risk_score(report_data):
         score -= zt_high     * 4
         score -= zt_new      * 5
 
+    # deduct for disabled firewall
+    firewall_status = report_data.get("firewall_status")
+    if firewall_status and firewall_status.get("risk") == "HIGH":
+        score -= 10
+
     # deduct for NIST Respond/Detect findings
     if "compliance" in report_data:
         nist_counts = report_data["compliance"].get("nist_counts", {})

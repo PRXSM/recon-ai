@@ -564,6 +564,13 @@ def run_zero_trust(live_hosts, open_ports, scanned_ip):
             f"I found {high_count} high-risk service(s) open to every device on your network. "
             "These should be restricted to trusted devices only."
         )
+    elif guest_device_count > 0:
+        summary = (
+            f"I found {guest_device_count} device(s) that appear to be "
+            f"personal or guest devices with access to {implicit_trust_count} "
+            f"service(s) on your network. Consider setting up a guest WiFi "
+            f"network to isolate them."
+        )
     else:
         summary = (
             f"I found {implicit_trust_count} service(s) worth reviewing for Zero Trust "
