@@ -344,45 +344,88 @@
         border-radius:10px;
         padding:18px 22px;
         margin-bottom:28px;">
-      <h2 style="color:#ff8800; margin:0 0 8px;">
-        ⚠️ New Device Detected
+      <h2 style="color:#ff8800; margin:0 0 4px;">
+        ⚠️ {{ new_devices|length }} New Device{{ 's' if new_devices|length != 1 else '' }} Detected
       </h2>
       <p style="color:#aaa; font-size:0.9em; margin:0 0 14px;">
-        The following devices were not on
-        your network last time you scanned.
-        Do you recognize them?
+        {% if new_devices|length > 4 %}
+        Showing 4 of {{ new_devices|length }} new devices. These were not on your network last time you scanned. Do you recognize them?
+        {% else %}
+        The following device{{ 's were' if new_devices|length != 1 else ' was' }} not on your network last time you scanned. Do you recognize {{ 'them' if new_devices|length != 1 else 'it' }}?
+        {% endif %}
       </p>
-      {% for device in new_devices %}
+
+      {# Show first 4 devices immediately, rest hidden behind toggle #}
+      {% for device in new_devices[:4] %}
       <div style="
           background:#111;
           border:1px solid #333;
           border-radius:6px;
           padding:12px 16px;
           margin:8px 0;">
-        <span style="
-            color:#ff8800;
-            font-family:monospace;
-            font-size:0.95em;">
+        <span style="color:#ff8800; font-family:monospace; font-size:0.95em;">
           {{ device if device is string else device.get('ip', 'Unknown IP') }}
         </span>
         {% if device is not string and device.get('mac') %}
-        <span style="
-            color:#555;
-            font-size:0.8em;
-            margin-left:12px;">
+        <span style="color:#555; font-size:0.8em; margin-left:12px;">
           MAC: {{ device.get('mac') }}
         </span>
         {% endif %}
-        <div style="
-            color:#888;
-            font-size:0.82em;
-            margin-top:4px;">
-          First seen today —
-          if you don't recognize this device,
-          check who's on your network.
+        <div style="color:#888; font-size:0.82em; margin-top:4px;">
+          First seen today — if you don't recognize this device, check who's on your network.
         </div>
       </div>
       {% endfor %}
+
+      {# Hidden overflow devices #}
+      {% if new_devices|length > 4 %}
+      <div id="new_devices_overflow" style="display:none;">
+        {% for device in new_devices[4:] %}
+        <div style="
+            background:#111;
+            border:1px solid #333;
+            border-radius:6px;
+            padding:12px 16px;
+            margin:8px 0;">
+          <span style="color:#ff8800; font-family:monospace; font-size:0.95em;">
+            {{ device if device is string else device.get('ip', 'Unknown IP') }}
+          </span>
+          {% if device is not string and device.get('mac') %}
+          <span style="color:#555; font-size:0.8em; margin-left:12px;">
+            MAC: {{ device.get('mac') }}
+          </span>
+          {% endif %}
+          <div style="color:#888; font-size:0.82em; margin-top:4px;">
+            First seen today — if you don't recognize this device, check who's on your network.
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+      <div style="text-align:center; margin-top:12px;">
+        <button onclick="
+          const el = document.getElementById('new_devices_overflow');
+          const btn = this;
+          if (el.style.display === 'none') {
+            el.style.display = 'block';
+            btn.textContent = '▲ Show fewer devices';
+          } else {
+            el.style.display = 'none';
+            btn.textContent = '▼ Show all {{ new_devices|length }} devices';
+          }
+        " style="
+          background:#1a1000;
+          border:1px solid #cc6600;
+          color:#ff8800;
+          border-radius:6px;
+          padding:8px 18px;
+          font-size:0.82em;
+          cursor:pointer;
+          font-family:Arial, sans-serif;">
+          ▼ Show all {{ new_devices|length }} devices
+        </button>
+      </div>
+      {% endif %}
     </div>
     {% endif %}
 
@@ -843,7 +886,8 @@
                 <span class="group-chevron" style="color:#333; font-size:0.75em;">▼</span>
             </div>
             <div class="device-group-body" style="display:none; border:1px solid #1e1e1e; border-top:none; border-radius:0 0 8px 8px; background:#0c0c0c; overflow:hidden;">
-                {% for finding in new_device_findings %}
+                {# Show first 4 findings immediately #}
+                {% for finding in new_device_findings[:4] %}
                 <div style="padding:12px 16px; border-bottom:1px solid #141414;">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
                         <span style="color:#bb88ff; font-weight:bold; font-size:0.9em;">{{ finding.title }}</span>
@@ -862,6 +906,55 @@
                     </div>
                 </div>
                 {% endfor %}
+
+                {# Hidden overflow findings #}
+                {% if new_device_findings|length > 4 %}
+                <div id="zt_new_devices_overflow" style="display:none;">
+                  {% for finding in new_device_findings[4:] %}
+                  <div style="padding:12px 16px; border-bottom:1px solid #141414;">
+                      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                          <span style="color:#bb88ff; font-weight:bold; font-size:0.9em;">{{ finding.title }}</span>
+                          <span style="
+                              {% if finding.risk == 'CRITICAL' %}background:#2a0000; color:#ff4444; border:1px solid #441111;
+                              {% elif finding.risk == 'HIGH' %}background:#1a0800; color:#ff8800; border:1px solid #442211;
+                              {% else %}background:#1a1400; color:#ffcc00; border:1px solid #443311;{% endif %}
+                              border-radius:10px; padding:2px 8px; font-size:0.72em; font-weight:bold;">
+                              {{ finding.risk }}
+                          </span>
+                      </div>
+                      <div style="color:#666; font-size:0.78em; line-height:1.5; margin-bottom:6px;">{{ finding.description }}</div>
+                      <div style="background:#0a0a0a; border:1px solid #1a1a1a; border-radius:6px; padding:8px 12px;">
+                          <span style="color:#44cc77; font-size:0.72em; font-weight:bold;">What to do: </span>
+                          <span style="color:#444; font-size:0.75em; line-height:1.5;">{{ finding.fix }}</span>
+                      </div>
+                  </div>
+                  {% endfor %}
+                </div>
+
+                <div style="text-align:center; padding:12px 16px; border-top:1px solid #141414;">
+                  <button onclick="
+                    const el = document.getElementById('zt_new_devices_overflow');
+                    const btn = this;
+                    if (el.style.display === 'none') {
+                      el.style.display = 'block';
+                      btn.textContent = '▲ Show fewer';
+                    } else {
+                      el.style.display = 'none';
+                      btn.textContent = '▼ Show all {{ new_device_findings|length }} new devices';
+                    }
+                  " style="
+                    background:#0e0a1a;
+                    border:1px solid #2a1a44;
+                    color:#bb88ff;
+                    border-radius:6px;
+                    padding:8px 18px;
+                    font-size:0.78em;
+                    cursor:pointer;
+                    font-family:Arial, sans-serif;">
+                    ▼ Show all {{ new_device_findings|length }} new devices
+                  </button>
+                </div>
+                {% endif %}
             </div>
         </div>
         {% endif %}
