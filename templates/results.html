@@ -1099,6 +1099,14 @@
                 </p>
             </div>
         </div>
+        {% if firewall_status.enabled is none %}
+        <div style="background:#0d1a0d; border:1px solid #1a3a1a; border-radius:6px; padding:14px 16px; margin-top:10px; font-size:0.85em;">
+            <div style="color:#66bb66; font-weight:bold; margin-bottom:8px;">How to check and enable your firewall:</div>
+            <div style="color:#888; margin-bottom:8px;"><strong style="color:#e0e0e0;">macOS:</strong> System Settings → Network → Firewall → turn it On</div>
+            <div style="color:#888; margin-bottom:8px;"><strong style="color:#e0e0e0;">Windows:</strong> Start → Windows Security → Firewall &amp; network protection → turn on for all network types</div>
+            <div style="color:#888;"><strong style="color:#e0e0e0;">Linux:</strong> Run <code style="color:#00bfff;">sudo ufw enable</code> in your terminal</div>
+        </div>
+        {% endif %}
     </div>
     {% endif %}
 

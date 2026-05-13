@@ -403,6 +403,14 @@ def scan():
             zero_trust = None
     report_data["zero_trust"] = zero_trust
 
+    # Exclude Recon AI's own server port — not a real finding
+    RECON_AI_PORTS = {5000, 5001}
+    if "open_ports" in report_data:
+        report_data["open_ports"] = [
+            p for p in report_data["open_ports"]
+            if not any(str(port) in str(p) for port in RECON_AI_PORTS)
+        ]
+
     # Compliance mapping
     all_findings = (
         report_data.get("vulnerabilities", []) +
@@ -668,7 +676,7 @@ if __name__ == "__main__":
     def open_browser():
         import time
         time.sleep(1.5)  # Wait for Flask to start
-        webbrowser.open("http://127.0.0.1:5000")
+        webbrowser.open("http://127.0.0.1:5001")
 
     threading.Thread(target=open_browser, daemon=True).start()
-    app.run(debug=False, threaded=True)
+    app.run(debug=False, threaded=True, port=5001)
