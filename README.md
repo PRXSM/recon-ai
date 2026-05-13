@@ -121,7 +121,7 @@ No Python, no setup, no terminal. Just download and double-click.
 | Platform | Download |
 |---|---|
 | **Windows** | [ReconAI-Windows.exe](https://github.com/PRXSM/recon-ai/releases/latest) |
-| **macOS** | [ReconAI-macOS.zip](https://github.com/PRXSM/recon-ai/releases/latest) — unzip and double-click ReconAI |
+| **macOS** | [ReconAI-macOS.app.zip](https://github.com/PRXSM/recon-ai/releases/latest) — unzip and double-click ReconAI |
 
 **Windows:** Windows Defender may show a "Windows protected your PC" warning. Click "More info" → "Run anyway." This is expected for unsigned applications.
 
