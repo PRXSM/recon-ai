@@ -34,3 +34,6 @@ notebooklm_tool.py
 yt_research.py
 RECON_AI_Roadmap.md
 Recon AI Roadmap.docx
+ReconAI.spec
+build/
+dist/
