@@ -121,7 +121,7 @@ PATTERNS = {
         "description": "Network reconnaissance commands detected."
     },
     "suspicious_download":{
-        "regex": r"wget|curl|powershell.*-enc|Invoke-WebRequest|*http|pip install|apt-get|yum install",
+        "regex": r"wget|curl|powershell.*-enc|Invoke-WebRequest|.*http|pip install|apt-get|yum install",
         "risk": "MEDIUM",
         "description": "Software download detected - verify this was authorized."
     },

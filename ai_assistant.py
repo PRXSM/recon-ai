@@ -17,7 +17,7 @@ client = anthropic.Anthropic(
 )
 
 # AI model — update here if the model changes. Can be overridden via CLAUDE_MODEL env var.
-CLAUDE_MODEL = os.getenv("CLAUDE_MODEL", "claude-sonnet-4-20250514")
+CLAUDE_MODEL = os.getenv("CLAUDE_MODEL", "claude-sonnet-5")
 
 # SECURITY: This system prompt includes prompt injection
 # hardening. See prompt_injection.py for the sanitization
@@ -88,7 +88,9 @@ def analyze_with_ai(scan_data):
             }
         ]
     )
-    return message.content[0].text
+    for block in message.content:
+        if block.type == "text":
+            return block.text
 
 def analyze_with_ollama(scan_data):
     """

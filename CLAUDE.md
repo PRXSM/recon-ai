@@ -118,6 +118,33 @@ Note: BUG-01 (socket.setdefaulttimeout() process-wide timeout in port_scanner.py
 
 Phase 14c delivered: ReconAI.exe — single-file Windows executable. Double-click launches Flask and auto-opens browser at http://127.0.0.1:5000. No Python, venv, or setup required. Built with PyInstaller 6.20.0 on Python 3.14 Windows 11. First non-technical user test completed successfully.
 
+**BUG-02 (log_analyzer.py — false-positive regex patterns):**
+Several threat patterns in `PATTERNS` match on single common English 
+words with no surrounding context, causing massive false-positive 
+counts on ordinary macOS system logs:
+
+- "malware_indicator" matches bare word "payload" — hits constantly 
+  on /var/log/install.log (Apple's own installer terminology, e.g. 
+  "XProtectPayloads", "ROM payload URL")
+- "log_tampering" matches bare word "truncate" — hits on routine 
+  automatic log rotation, not actual tampering
+- "suspicious_process" matches "/bin/sh" — hits on any normal script 
+  invocation
+- "ransomware_indicator" matches bare word "encrypted" — hits on 
+  routine FileVault/Keychain logging
+
+Confirmed via direct grep against /var/log/install.log on 2026-09-02: 
+matched lines were legitimate Apple installer/EFI updater activity, 
+zero actual threats. Real-world impact: triggered a 0/100 CRITICAL 
+score with thousands of false "malware" hits on a clean, normal-use 
+Mac — exactly the panic scenario a non-technical Phase 16 user must 
+never hit.
+
+Fix for Phase 15: require multi-word context per pattern (e.g. 
+`truncate.*log` instead of bare `truncate`) rather than single 
+keyword OR-matching. Audit all 30+ patterns in PATTERNS dict for the 
+same single-keyword weakness before public deployment.
+
 ## Brand Voice — Recon AI speaks in first person
 
 Recon AI is a single entity with a personality. All user-facing copy must follow these rules:

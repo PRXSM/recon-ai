@@ -366,12 +366,14 @@ def run_adversary_agent(existing_analysis,
     )
     try:
         message = anthropic_client.messages.create(
-            model="claude-sonnet-4-20250514",
+            model="claude-sonnet-5",
             max_tokens=1000,
             system=ADVERSARY_SYSTEM_PROMPT,
             messages=[{"role": "user", "content": user_message}],
         )
-        return message.content[0].text
+        for block in message.content:
+            if block.type == "text":
+                return block.text
     except Exception as e:
         logger.error(f"Adversary Agent failed: {e}")
         return None
@@ -413,12 +415,14 @@ def run_prioritizer_agent(adversary_output,
     )
     try:
         message = anthropic_client.messages.create(
-            model="claude-sonnet-4-20250514",
+            model="claude-sonnet-5",
             max_tokens=150,
             system=PRIORITIZER_SYSTEM_PROMPT,
             messages=[{"role": "user", "content": user_message}],
         )
-        return message.content[0].text.strip()
+        for block in message.content:
+            if block.type == "text":
+                return block.text.strip()
     except Exception as e:
         logger.error(f"Risk Prioritizer Agent failed: {e}")
         return None
